@@ -1,0 +1,2412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>शहरBuddy — Find Your City</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+:root {
+  --bg:       #09090b;
+  --bg1:      #0f0f12;
+  --bg2:      #141418;
+  --bg3:      #1c1c22;
+  --bg4:      #242430;
+  --border:   rgba(255,255,255,.07);
+  --border-a: rgba(79,70,229,.35);
+  --white:    #fafafa;
+  --silver:   #a1a1aa;
+  --dim:      #52525b;
+  --cyan:     #06b6d4;
+  --violet:   #4f46e5;
+  --violet-l: #818cf8;
+  --gold:     #eab308;
+  --danger:   #ef4444;
+  --font-display: 'Outfit', sans-serif;
+  --font-deva: 'Noto Sans Devanagari', sans-serif;
+  --ease: cubic-bezier(.4,0,.2,1);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.4);
+  --shadow-md: 0 4px 24px rgba(0,0,0,.5);
+  --shadow-lg: 0 8px 48px rgba(0,0,0,.6);
+  --shadow-v:  0 0 40px rgba(79,70,229,.2);
+  --grad-v: linear-gradient(135deg,#4f46e5,#06b6d4);
+  --grad-vd: linear-gradient(135deg,#3730a3,#0891b2);
+}
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; font-size:15px; }
+body {
+  background:var(--bg);
+  color:var(--silver);
+  font-family:var(--font-display);
+  line-height:1.65;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--bg4); border-radius:2px; }
+::-webkit-scrollbar-thumb:hover { background:var(--violet); }
+
+@keyframes fadeUp   { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+@keyframes slideDown{ from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes shimmer  { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+@keyframes ticker   { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+@keyframes pulse-ring { 0%,100%{box-shadow:0 0 0 0 rgba(79,70,229,.3)} 50%{box-shadow:0 0 0 8px rgba(79,70,229,.0)} }
+@keyframes confettiFall { 0%{opacity:1;transform:translateY(-10px) rotate(0deg)} 100%{opacity:0;transform:translateY(110vh) rotate(540deg)} }
+@keyframes ringFill { from{stroke-dashoffset:283} to{stroke-dashoffset:var(--ring-offset)} }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+@keyframes authSlideUp { from{opacity:0;transform:translateY(28px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes glowPulse { 0%,100%{opacity:.4} 50%{opacity:.8} }
+
+.au { animation:fadeUp .55s var(--ease) both; }
+.d1{animation-delay:.08s} .d2{animation-delay:.16s} .d3{animation-delay:.24s}
+.d4{animation-delay:.32s} .d5{animation-delay:.4s}  .d6{animation-delay:.48s}
+.reveal { opacity:0; transform:translateY(18px); transition:opacity .55s var(--ease), transform .55s var(--ease); }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+.container { max-width:1120px; margin:0 auto; padding:0 24px; }
+section { padding:72px 0; }
+.section-eyebrow {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:11px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase;
+  color:var(--cyan); margin-bottom:10px;
+}
+.section-eyebrow::before { content:''; width:20px; height:1px; background:var(--cyan); }
+.section-title { font-size:clamp(1.5rem,3vw,2.2rem); font-weight:700; color:var(--white); line-height:1.2; margin-bottom:8px; }
+.section-sub { font-size:14px; color:var(--dim); max-width:520px; line-height:1.7; }
+hr.divider { border:none; border-top:1px solid var(--border); margin:0; }
+
+/* ── NAVBAR ── */
+#nav {
+  position:fixed; top:0; left:0; right:0; z-index:900;
+  padding:0 28px; height:58px;
+  display:flex; align-items:center; justify-content:space-between;
+  transition:background .3s, box-shadow .3s;
+}
+#nav.scrolled { background:rgba(9,9,11,.92); backdrop-filter:blur(20px); box-shadow:0 1px 0 var(--border); }
+.nav-logo {
+  display:flex; align-items:baseline; gap:1px; text-decoration:none; cursor:pointer;
+  font-size:1.15rem; font-weight:800; white-space:nowrap; flex-shrink:0;
+}
+.logo-devanagari { font-family:var(--font-deva); color:var(--white); font-weight:800; letter-spacing:-.5px; }
+.logo-buddy { color:var(--violet-l); font-family:var(--font-display); font-weight:800; }
+.nav-center { display:flex; align-items:center; gap:2px; }
+.nav-link {
+  color:var(--dim); font-size:13.5px; font-weight:500;
+  padding:6px 13px; border-radius:7px; cursor:pointer;
+  transition:all .2s; border:none; background:none; text-decoration:none;
+}
+.nav-link:hover { color:var(--silver); background:rgba(255,255,255,.05); }
+.nav-link.active { color:var(--white); background:rgba(255,255,255,.07); }
+.nav-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.nav-city-badge {
+  display:flex; align-items:center; gap:5px; cursor:pointer;
+  background:rgba(79,70,229,.12); border:1px solid rgba(79,70,229,.3);
+  color:var(--violet-l); font-size:12px; font-weight:600;
+  padding:5px 12px; border-radius:6px; transition:all .2s; white-space:nowrap;
+}
+.nav-city-badge:hover { background:rgba(79,70,229,.2); }
+.btn-primary {
+  background:var(--grad-v); border:none; color:#fff;
+  padding:7px 18px; border-radius:7px; font-size:13px; font-weight:600;
+  cursor:pointer; transition:all .22s; white-space:nowrap;
+  font-family:var(--font-display);
+}
+.btn-primary:hover { opacity:.88; transform:translateY(-1px); box-shadow:0 6px 20px rgba(79,70,229,.35); }
+.btn-ghost {
+  background:none; border:1px solid var(--border); color:var(--silver);
+  padding:7px 18px; border-radius:7px; font-size:13px; font-weight:500;
+  cursor:pointer; transition:all .2s; font-family:var(--font-display);
+}
+.btn-ghost:hover { border-color:rgba(255,255,255,.18); color:var(--white); }
+.hamburger { display:none; background:none; border:none; color:var(--silver); cursor:pointer; padding:4px; }
+
+/* NAV AVATAR (logged in state) */
+.nav-avatar-btn {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,.05); border:1px solid var(--border);
+  padding:4px 12px 4px 4px; border-radius:8px; cursor:pointer; transition:all .2s;
+}
+.nav-avatar-btn:hover { background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.14); }
+.nav-avatar {
+  width:30px; height:30px; border-radius:6px; background:var(--grad-v);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11.5px; font-weight:800; color:#fff; flex-shrink:0;
+}
+.nav-avatar-name { font-size:12.5px; font-weight:600; color:var(--white); max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* ── MOBILE DRAWER ── */
+.drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; opacity:0; pointer-events:none; transition:opacity .28s; }
+.drawer-overlay.open { opacity:1; pointer-events:all; }
+.drawer {
+  position:fixed; top:0; right:0; bottom:0; width:76%; max-width:280px; z-index:1001;
+  background:var(--bg1); border-left:1px solid var(--border); padding:22px 18px;
+  transform:translateX(100%); transition:transform .3s var(--ease);
+}
+.drawer.open { transform:translateX(0); }
+.drawer-close { position:absolute; top:14px; right:14px; background:rgba(255,255,255,.06); border:none; color:var(--silver); cursor:pointer; width:30px; height:30px; border-radius:6px; display:flex; align-items:center; justify-content:center; }
+.drawer-logo { font-size:1.1rem; font-weight:800; margin-bottom:28px; display:block; }
+.drawer-nav { display:flex; flex-direction:column; gap:2px; }
+.drawer-item { color:var(--dim); font-size:14px; padding:10px 12px; border-radius:8px; cursor:pointer; transition:all .18s; border:none; background:none; text-align:left; width:100%; }
+.drawer-item:hover { color:var(--white); background:rgba(255,255,255,.06); }
+
+/* ── HERO ── */
+.hero {
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:100px 24px 72px; text-align:center; position:relative; overflow:hidden;
+}
+.hero-bg { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.hero-bg::before {
+  content:''; position:absolute; inset:0;
+  background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size:32px 32px;
+}
+.hero-bg::after {
+  content:''; position:absolute; top:-200px; left:50%; transform:translateX(-50%);
+  width:700px; height:500px; border-radius:50%;
+  background:radial-gradient(ellipse, rgba(79,70,229,.18) 0%, transparent 70%);
+}
+.hero-tag {
+  display:inline-flex; align-items:center; gap:7px;
+  border:1px solid rgba(79,70,229,.35); background:rgba(79,70,229,.08);
+  color:var(--violet-l); font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+  padding:6px 16px; border-radius:50px; margin-bottom:24px;
+}
+.hero-tag span { width:6px; height:6px; border-radius:50%; background:var(--violet-l); animation:pulse-ring 2s ease infinite; }
+.hero h1 {
+  font-size:clamp(2rem,5.5vw,3.8rem);
+  font-weight:800; line-height:1.1; color:var(--white);
+  max-width:760px; margin:0 auto 16px; letter-spacing:-.02em;
+}
+.hero h1 em { font-style:normal; background:var(--grad-v); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.hero-sub { font-size:clamp(.9rem,1.8vw,1.05rem); color:var(--dim); max-width:520px; margin:0 auto 40px; line-height:1.7; font-weight:400; }
+
+/* ── SEARCH ── */
+.search-wrap { width:100%; max-width:640px; margin:0 auto; position:relative; z-index:10; }
+.search-bar {
+  display:flex; align-items:center; gap:0;
+  background:var(--bg2); border:1px solid rgba(255,255,255,.1);
+  border-radius:11px; overflow:hidden;
+  box-shadow:var(--shadow-md);
+  transition:border-color .22s, box-shadow .22s;
+}
+.search-bar:focus-within { border-color:rgba(79,70,229,.5); box-shadow:var(--shadow-md), 0 0 0 3px rgba(79,70,229,.12); }
+.search-icon-wrap { display:flex; align-items:center; padding:0 14px; color:var(--dim); flex-shrink:0; }
+.search-bar input {
+  flex:1; background:none; border:none; outline:none;
+  color:var(--white); font-size:.95rem; font-family:var(--font-display);
+  padding:14px 0; caret-color:var(--violet-l);
+}
+.search-bar input::placeholder { color:var(--dim); }
+.search-sep { width:1px; height:28px; background:var(--border); flex-shrink:0; }
+.search-submit {
+  display:flex; align-items:center; gap:7px;
+  background:var(--grad-v); border:none; color:#fff;
+  padding:10px 20px; font-size:13px; font-weight:600; cursor:pointer;
+  transition:opacity .2s; margin:5px; border-radius:8px;
+  font-family:var(--font-display); white-space:nowrap; flex-shrink:0;
+}
+.search-submit:hover { opacity:.88; }
+.search-dropdown {
+  position:absolute; top:calc(100% + 6px); left:0; right:0;
+  background:var(--bg2); border:1px solid rgba(255,255,255,.1);
+  border-radius:11px; overflow:hidden; box-shadow:var(--shadow-lg);
+  z-index:20; display:none;
+}
+.search-dropdown.open { display:block; animation:slideDown .18s ease; }
+.dd-item {
+  display:flex; align-items:center; gap:12px; padding:11px 16px;
+  cursor:pointer; transition:background .12s; border-bottom:1px solid var(--border);
+}
+.dd-item:last-child { border-bottom:none; }
+.dd-item:hover { background:rgba(255,255,255,.04); }
+.dd-icon { width:34px; height:34px; border-radius:8px; background:rgba(79,70,229,.15); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+.dd-name { font-size:13.5px; font-weight:600; color:var(--white); }
+.dd-sub { font-size:11.5px; color:var(--dim); }
+.dd-badge { margin-left:auto; background:rgba(6,182,212,.1); border:1px solid rgba(6,182,212,.25); color:var(--cyan); font-size:10px; font-weight:600; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+
+.city-pills { display:flex; gap:8px; margin-top:24px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; justify-content:center; flex-wrap:wrap; }
+.city-pills::-webkit-scrollbar { display:none; }
+.city-pill { border:1px solid var(--border); background:var(--bg2); color:var(--dim); font-size:12.5px; font-weight:500; padding:6px 16px; border-radius:6px; cursor:pointer; transition:all .2s; white-space:nowrap; flex-shrink:0; }
+.city-pill:hover { border-color:rgba(255,255,255,.15); color:var(--silver); }
+.city-pill.active { border-color:var(--violet); background:rgba(79,70,229,.12); color:var(--violet-l); font-weight:600; }
+
+.stats-row { display:flex; flex-wrap:wrap; gap:0; margin-top:52px; justify-content:center; }
+.stat-item { padding:20px 36px; text-align:center; border-right:1px solid var(--border); }
+.stat-item:last-child { border-right:none; }
+.stat-num { font-size:1.75rem; font-weight:800; color:var(--white); letter-spacing:-.02em; line-height:1; }
+.stat-label { font-size:11px; color:var(--dim); margin-top:4px; letter-spacing:.5px; }
+.scroll-cue { position:absolute; bottom:28px; left:50%; transform:translateX(-50%); color:var(--dim); animation:bounce 2.5s ease infinite; }
+
+.ticker-bar { border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:10px 0; overflow:hidden; background:var(--bg1); }
+.ticker-track { display:flex; width:max-content; animation:ticker 35s linear infinite; }
+.ticker-item { display:flex; align-items:center; gap:8px; padding:0 32px; font-size:12px; color:var(--dim); white-space:nowrap; }
+.ticker-item strong { color:var(--silver); }
+.ticker-dot { width:3px; height:3px; border-radius:50%; background:var(--violet); }
+
+.explorer-header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:32px; }
+.explorer-city { font-size:clamp(1.4rem,3vw,2rem); font-weight:800; color:var(--white); }
+.explorer-meta { font-size:13px; color:var(--dim); margin-top:2px; }
+
+.tabs-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:32px; overflow-x:auto; scrollbar-width:none; }
+.tabs-bar::-webkit-scrollbar { display:none; }
+.tab-btn { display:flex; align-items:center; gap:6px; padding:10px 18px; font-size:13px; font-weight:500; color:var(--dim); cursor:pointer; border:none; background:none; white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .2s; font-family:var(--font-display); }
+.tab-btn:hover { color:var(--silver); }
+.tab-btn.active { color:var(--white); border-bottom-color:var(--violet-l); font-weight:600; }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; animation:fadeIn .25s ease; }
+
+.cat-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px; }
+.cat-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px 14px; cursor:pointer; transition:all .22s; text-align:center; position:relative; overflow:hidden; }
+.cat-card::before { content:''; position:absolute; inset:0; background:var(--grad-v); opacity:0; transition:opacity .22s; }
+.cat-card:hover { border-color:rgba(79,70,229,.4); transform:translateY(-3px); box-shadow:0 8px 30px rgba(79,70,229,.15); }
+.cat-card:hover::before { opacity:.06; }
+.cat-card.selected { border-color:var(--violet); background:rgba(79,70,229,.1); }
+.cat-emoji { font-size:1.6rem; margin-bottom:8px; position:relative; }
+.cat-name { font-size:12.5px; font-weight:600; color:var(--white); margin-bottom:3px; position:relative; }
+.cat-count { font-size:11px; color:var(--cyan); position:relative; }
+
+.places-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; padding-top:28px; border-top:1px solid var(--border); }
+.places-title { font-size:15px; font-weight:600; color:var(--white); }
+.places-count { font-size:12px; color:var(--dim); }
+.places-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(270px,1fr)); gap:14px; }
+.place-card { background:var(--bg2); border:1px solid var(--border); border-radius:11px; overflow:hidden; cursor:pointer; transition:all .22s; display:flex; flex-direction:column; }
+.place-card:hover { border-color:rgba(79,70,229,.4); transform:translateY(-4px); box-shadow:0 12px 36px rgba(0,0,0,.4); }
+.place-thumb { height:120px; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:2.2rem; position:relative; overflow:hidden; border-bottom:1px solid var(--border); }
+.place-thumb-gradient { position:absolute; inset:0; opacity:.5; background:radial-gradient(circle at 30% 50%, rgba(79,70,229,.25), transparent 65%); }
+.place-cat-chip { position:absolute; top:8px; left:8px; background:rgba(9,9,11,.75); backdrop-filter:blur(8px); border:1px solid var(--border); color:var(--silver); font-size:10px; font-weight:600; padding:2px 8px; border-radius:4px; letter-spacing:.5px; text-transform:uppercase; }
+.place-budget { position:absolute; top:8px; right:8px; font-size:12px; color:var(--gold); }
+.place-body { padding:14px; flex:1; display:flex; flex-direction:column; }
+.place-name { font-size:14px; font-weight:700; color:var(--white); margin-bottom:4px; line-height:1.3; }
+.place-loc { display:flex; align-items:center; gap:4px; font-size:11.5px; color:var(--dim); margin-bottom:10px; }
+.place-tags { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px; }
+.place-tag { font-size:10px; color:var(--dim); background:rgba(255,255,255,.05); border:1px solid var(--border); padding:2px 7px; border-radius:3px; }
+.place-desc { font-size:12.5px; color:var(--dim); line-height:1.55; flex:1; margin-bottom:12px; }
+.place-footer { display:flex; align-items:center; justify-content:space-between; margin-top:auto; gap:8px; }
+.place-rating { display:flex; align-items:center; gap:4px; font-size:12px; }
+.stars-fill { color:var(--gold); }
+.stars-empty { color:var(--bg4); }
+.rating-val { color:var(--silver); font-size:12px; font-weight:600; }
+.rating-count { color:var(--dim); font-size:11px; }
+.map-btn { display:flex; align-items:center; gap:5px; background:none; border:1px solid rgba(6,182,212,.3); color:var(--cyan); font-size:11.5px; font-weight:600; padding:5px 11px; border-radius:5px; cursor:pointer; text-decoration:none; transition:all .2s; white-space:nowrap; flex-shrink:0; font-family:var(--font-display); }
+.map-btn:hover { background:rgba(6,182,212,.08); border-color:var(--cyan); }
+
+.skel { background:linear-gradient(90deg, var(--bg3) 0%, var(--bg4) 50%, var(--bg3) 100%); background-size:600px 100%; animation:shimmer 1.6s infinite; border-radius:6px; }
+
+.tips-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:14px; }
+.tip-card { background:var(--bg2); border:1px solid var(--border); border-radius:11px; padding:18px; transition:all .22s; }
+.tip-card:hover { border-color:rgba(255,255,255,.12); transform:translateY(-2px); }
+.tip-quote { font-size:13.5px; color:var(--silver); line-height:1.65; margin-bottom:14px; font-style:italic; }
+.tip-footer { display:flex; align-items:center; gap:10px; }
+.tip-avatar { width:32px; height:32px; border-radius:50%; background:var(--grad-v); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; flex-shrink:0; }
+.tip-name { font-size:13px; font-weight:600; color:var(--white); }
+.tip-loc { font-size:11px; color:var(--dim); }
+.tip-pts { margin-left:auto; font-size:11px; font-weight:600; color:var(--gold); background:rgba(234,179,8,.08); border:1px solid rgba(234,179,8,.2); padding:2px 8px; border-radius:4px; white-space:nowrap; }
+.tip-upvotes { display:flex; align-items:center; gap:4px; font-size:11.5px; color:var(--dim); cursor:pointer; padding:4px; border:none; background:none; transition:color .2s; }
+.tip-upvotes:hover { color:var(--violet-l); }
+
+.budget-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+.budget-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:22px; }
+.budget-card-title { font-size:14px; font-weight:600; color:var(--white); margin-bottom:18px; display:flex; align-items:center; gap:7px; }
+.slider-group { margin-bottom:14px; }
+.slider-label { display:flex; justify-content:space-between; margin-bottom:5px; font-size:12.5px; }
+.slider-name { color:var(--silver); }
+.slider-val { color:var(--white); font-weight:600; }
+input[type=range] { width:100%; height:3px; border-radius:2px; cursor:pointer; accent-color:var(--violet); background:var(--bg4); }
+.budget-total { background:var(--grad-v); border-radius:10px; padding:16px; text-align:center; margin-top:16px; }
+.budget-total-label { font-size:11px; color:rgba(255,255,255,.6); letter-spacing:1px; text-transform:uppercase; }
+.budget-total-num { font-size:1.9rem; font-weight:800; color:#fff; line-height:1.2; margin-top:2px; }
+.rent-row { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg3); border-radius:8px; margin-bottom:8px; font-size:13px; }
+.rent-type { color:var(--silver); }
+.rent-val { color:var(--white); font-weight:600; }
+.pie-container { display:flex; align-items:center; gap:20px; margin-top:14px; flex-wrap:wrap; }
+.pie-legend { display:flex; flex-direction:column; gap:7px; flex:1; }
+.pie-legend-row { display:flex; align-items:center; gap:7px; font-size:12px; }
+.pie-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.pie-key { color:var(--dim); flex:1; }
+.pie-amount { color:var(--white); font-weight:600; }
+
+.relo-card { background:var(--bg2); border:1px solid rgba(79,70,229,.25); border-radius:12px; padding:24px; }
+.relo-question { font-size:13.5px; font-weight:600; color:var(--white); margin-bottom:12px; }
+.relo-options { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
+.relo-opt { padding:7px 16px; border-radius:6px; border:1px solid var(--border); background:var(--bg3); color:var(--dim); font-size:12.5px; cursor:pointer; transition:all .18s; font-family:var(--font-display); }
+.relo-opt.active { border-color:var(--violet); background:rgba(79,70,229,.12); color:var(--violet-l); font-weight:600; }
+.relo-result { background:rgba(79,70,229,.07); border:1px solid rgba(79,70,229,.2); border-radius:10px; padding:18px; animation:fadeIn .3s ease; }
+.relo-area-chip { display:inline-flex; align-items:center; gap:5px; background:rgba(6,182,212,.08); border:1px solid rgba(6,182,212,.2); color:var(--cyan); font-size:12px; padding:4px 12px; border-radius:5px; margin:3px; }
+.relo-tip { background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:8px; padding:12px; margin-top:12px; font-size:12.5px; color:var(--dim); font-style:italic; line-height:1.6; }
+
+.community-grid { display:grid; grid-template-columns:2fr 1fr; gap:24px; align-items:start; }
+.community-feed { display:flex; flex-direction:column; gap:12px; }
+.feed-card { background:var(--bg2); border:1px solid var(--border); border-radius:11px; display:flex; align-items:stretch; overflow:hidden; cursor:pointer; transition:all .22s; }
+.feed-card:hover { border-color:rgba(79,70,229,.4); transform:translateX(3px); }
+.feed-thumb { width:80px; flex-shrink:0; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:1.8rem; border-right:1px solid var(--border); }
+.feed-body { padding:12px 14px; flex:1; }
+.feed-name { font-size:13.5px; font-weight:600; color:var(--white); margin-bottom:3px; }
+.feed-loc { font-size:11.5px; color:var(--dim); display:flex; align-items:center; gap:4px; margin-bottom:7px; }
+.feed-tags { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px; }
+.feed-footer { display:flex; align-items:center; gap:8px; }
+
+.points-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:20px; position:sticky; top:76px; }
+.pts-user-row { display:flex; align-items:center; gap:11px; margin-bottom:18px; }
+.pts-avatar { width:42px; height:42px; border-radius:50%; flex-shrink:0; background:var(--grad-v); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#fff; }
+.pts-name { font-size:14px; font-weight:700; color:var(--white); }
+.pts-tier { font-size:11px; color:var(--gold); }
+.pts-ring-wrap { text-align:center; margin-bottom:16px; }
+.pts-ring { display:block; margin:0 auto 6px; transform:rotate(-90deg); }
+.pts-ring circle { transition:stroke-dashoffset 1.4s var(--ease); }
+.pts-total { font-size:1.7rem; font-weight:800; color:var(--white); line-height:1; }
+.pts-unit { font-size:11px; color:var(--dim); letter-spacing:1px; text-transform:uppercase; }
+.tier-list { display:flex; flex-direction:column; gap:6px; }
+.tier-row { display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg3); }
+.tier-row.current { border-color:rgba(234,179,8,.4); background:rgba(234,179,8,.05); }
+.tier-icon { font-size:1.1rem; }
+.tier-name-text { font-size:12.5px; font-weight:600; color:var(--white); }
+.tier-range { font-size:10.5px; color:var(--dim); }
+.earn-list { margin-top:16px; display:flex; flex-direction:column; gap:6px; }
+.earn-item { display:flex; justify-content:space-between; font-size:12px; padding:7px 10px; background:var(--bg3); border-radius:6px; }
+.earn-action { color:var(--silver); }
+.earn-pts-val { color:var(--gold); font-weight:700; }
+
+.leaderboard-table { width:100%; border-collapse:collapse; }
+.leaderboard-table thead th { text-align:left; padding:9px 14px; font-size:10.5px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--dim); border-bottom:1px solid var(--border); }
+.leaderboard-table tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background .12s; }
+.leaderboard-table tbody tr:last-child { border-bottom:none; }
+.leaderboard-table tbody tr:hover { background:rgba(255,255,255,.025); }
+.leaderboard-table td { padding:11px 14px; font-size:13px; color:var(--dim); }
+.lb-rank { font-weight:800; font-size:1rem; text-align:center; }
+.lb-r1 { color:var(--gold); } .lb-r2 { color:#94a3b8; } .lb-r3 { color:#a1a1aa; }
+.lb-user { display:flex; align-items:center; gap:10px; }
+.lb-avatar { width:32px; height:32px; border-radius:50%; background:var(--grad-v); display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; color:#fff; flex-shrink:0; }
+.lb-uname { font-size:13px; font-weight:600; color:var(--white); }
+.lb-city-tag { background:rgba(79,70,229,.1); border:1px solid rgba(79,70,229,.25); color:var(--violet-l); font-size:10.5px; padding:2px 8px; border-radius:4px; }
+.lb-pts-val { color:var(--white); font-weight:700; }
+.lb-tier { font-size:12px; }
+
+.checklist-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:20px; }
+.checklist-title { font-size:14px; font-weight:700; color:var(--white); margin-bottom:16px; display:flex; align-items:center; gap:7px; }
+.check-item { display:flex; align-items:center; gap:11px; padding:9px 0; border-bottom:1px solid var(--border); cursor:pointer; transition:all .18s; }
+.check-item:last-child { border-bottom:none; }
+.check-box { width:20px; height:20px; border-radius:5px; border:1.5px solid var(--dim); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .2s; }
+.check-item.done .check-box { background:var(--violet); border-color:var(--violet); }
+.check-label { font-size:13px; color:var(--silver); flex:1; }
+.check-item.done .check-label { text-decoration:line-through; color:var(--dim); }
+.check-pts-tag { font-size:10.5px; color:var(--gold); font-weight:600; }
+
+.steps-row { display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin-top:40px; }
+.step-item { text-align:center; padding:0 16px; position:relative; }
+.step-item::after { content:''; position:absolute; top:22px; left:calc(50% + 28px); right:0; height:1px; background:var(--border); }
+.step-item:last-child::after { display:none; }
+.step-num { width:44px; height:44px; border-radius:50%; border:1.5px solid var(--border); background:var(--bg2); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1rem; color:var(--white); margin:0 auto 14px; }
+.step-active .step-num { background:var(--grad-v); border-color:transparent; color:#fff; }
+.step-title { font-size:13px; font-weight:600; color:var(--white); margin-bottom:5px; }
+.step-desc { font-size:12px; color:var(--dim); line-height:1.55; }
+
+.compare-grid { display:grid; grid-template-columns:1fr 48px 1fr; gap:0; align-items:center; }
+.compare-col { background:var(--bg2); border:1px solid var(--border); border-radius:11px; padding:20px; }
+.compare-vs { text-align:center; font-size:12px; font-weight:700; color:var(--dim); }
+.compare-city-name { font-size:15px; font-weight:700; color:var(--white); margin-bottom:14px; }
+.compare-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px; }
+.compare-row:last-child { border-bottom:none; }
+.compare-key { color:var(--dim); }
+.compare-val { color:var(--silver); font-weight:600; }
+
+/* ═══════════════════════════════════════════
+   PROFILE DASHBOARD — SWIGGY-STYLE REDESIGN
+═══════════════════════════════════════════ */
+.profile-layout { display:grid; grid-template-columns:300px 1fr; gap:24px; align-items:start; }
+
+/* Left Card */
+.profile-identity-card {
+  background:var(--bg2); border:1px solid var(--border); border-radius:14px;
+  overflow:hidden; position:sticky; top:76px;
+}
+.profile-id-hero {
+  background: linear-gradient(145deg, rgba(79,70,229,.18) 0%, rgba(6,182,212,.08) 100%);
+  border-bottom:1px solid var(--border);
+  padding:24px 20px; display:flex; flex-direction:column; align-items:center; text-align:center;
+}
+.profile-ava {
+  width:68px; height:68px; border-radius:16px; background:var(--grad-v);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; font-weight:800; color:#fff; margin-bottom:12px;
+  box-shadow:0 8px 24px rgba(79,70,229,.35);
+}
+.profile-name { font-size:16px; font-weight:700; color:var(--white); margin-bottom:2px; }
+.profile-city-tag { font-size:12px; color:var(--dim); display:flex; align-items:center; gap:4px; justify-content:center; margin-bottom:16px; }
+.profile-pts-pill {
+  display:inline-flex; align-items:center; gap:7px;
+  background:rgba(234,179,8,.07); border:1px solid rgba(234,179,8,.22);
+  border-radius:8px; padding:8px 16px;
+}
+.profile-pts-num { font-size:1.3rem; font-weight:800; color:var(--white); line-height:1; }
+.profile-pts-label { font-size:10.5px; color:var(--gold); text-transform:uppercase; letter-spacing:1px; }
+.profile-tier-badge {
+  margin-top:10px; font-size:12px; color:var(--gold); font-weight:600;
+  display:flex; align-items:center; gap:5px;
+}
+.profile-id-body { padding:8px 0; }
+.profile-edit-btn {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  width:calc(100% - 32px); margin:12px 16px 4px;
+  background:rgba(255,255,255,.05); border:1px solid var(--border);
+  color:var(--silver); padding:8px; border-radius:8px;
+  font-size:13px; font-weight:500; cursor:pointer; transition:all .2s;
+  font-family:var(--font-display);
+}
+.profile-edit-btn:hover { background:rgba(255,255,255,.09); color:var(--white); }
+
+/* Badge strip */
+.badge-strip { display:flex; gap:6px; padding:14px 16px 0; flex-wrap:wrap; }
+.badge-chip {
+  display:flex; align-items:center; gap:5px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:6px; padding:5px 9px; font-size:11px; color:var(--dim);
+}
+.badge-chip span:first-child { font-size:13px; }
+
+/* Right — Menu List */
+.profile-menu-card {
+  background:var(--bg2); border:1px solid var(--border); border-radius:14px; overflow:hidden;
+}
+.profile-menu-section { padding:8px 0; }
+.profile-menu-section + .profile-menu-section { border-top:1px solid var(--border); }
+
+.profile-menu-row {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 20px; cursor:pointer; transition:background .15s; position:relative;
+}
+.profile-menu-row:hover { background:rgba(255,255,255,.035); }
+.profile-menu-row:hover .pmr-chevron { color:var(--silver); transform:translateX(2px); }
+
+.pmr-icon-wrap {
+  width:40px; height:40px; border-radius:10px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--border);
+}
+.pmr-icon-wrap.violet { background:rgba(79,70,229,.12); border-color:rgba(79,70,229,.25); color:var(--violet-l); }
+.pmr-icon-wrap.cyan   { background:rgba(6,182,212,.1);  border-color:rgba(6,182,212,.25);  color:var(--cyan); }
+.pmr-icon-wrap.gold   { background:rgba(234,179,8,.08); border-color:rgba(234,179,8,.22);  color:var(--gold); }
+.pmr-icon-wrap.slate  { background:rgba(255,255,255,.05); border-color:var(--border); color:var(--silver); }
+
+.pmr-text { flex:1; }
+.pmr-title { font-size:14px; font-weight:600; color:var(--white); margin-bottom:2px; }
+.pmr-sub   { font-size:12px; color:var(--dim); }
+
+.pmr-chevron { color:var(--bg4); transition:all .18s; flex-shrink:0; }
+.pmr-badge { background:var(--grad-v); color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; margin-left:auto; flex-shrink:0; }
+
+.profile-menu-divider { height:1px; background:var(--border); margin:0 20px; }
+
+/* Logout row */
+.pmr-logout { color:var(--danger) !important; }
+.pmr-logout .pmr-title { color:var(--danger); }
+.pmr-logout .pmr-icon-wrap { background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.2); color:var(--danger); }
+
+/* ═══════════════════════════════════════════
+   AUTH MODAL — PREMIUM GLASSMORPHISM
+═══════════════════════════════════════════ */
+.auth-overlay {
+  position:fixed; inset:0; z-index:2000;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  opacity:0; pointer-events:none; transition:opacity .3s var(--ease);
+  background:rgba(0,0,0,.75); backdrop-filter:blur(12px);
+}
+.auth-overlay.open { opacity:1; pointer-events:all; }
+
+.auth-panel {
+  width:100%; max-width:440px;
+  background:linear-gradient(145deg, rgba(20,20,24,.98) 0%, rgba(15,15,18,.98) 100%);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px; padding:36px 32px;
+  box-shadow:0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(79,70,229,.15), inset 0 1px 0 rgba(255,255,255,.06);
+  position:relative; overflow:hidden;
+  opacity:0; transform:translateY(24px) scale(.97);
+  transition:all .35s var(--ease);
+}
+.auth-overlay.open .auth-panel { opacity:1; transform:translateY(0) scale(1); }
+
+/* Glow orbs inside auth panel */
+.auth-panel::before {
+  content:''; position:absolute; top:-60px; right:-60px;
+  width:200px; height:200px; border-radius:50%;
+  background:radial-gradient(circle, rgba(79,70,229,.22) 0%, transparent 70%);
+  animation:glowPulse 4s ease-in-out infinite; pointer-events:none;
+}
+.auth-panel::after {
+  content:''; position:absolute; bottom:-40px; left:-40px;
+  width:150px; height:150px; border-radius:50%;
+  background:radial-gradient(circle, rgba(6,182,212,.14) 0%, transparent 70%);
+  animation:glowPulse 4s ease-in-out infinite 2s; pointer-events:none;
+}
+
+.auth-logo {
+  display:flex; align-items:baseline; gap:1px; margin-bottom:6px;
+  font-size:1.3rem; font-weight:800;
+}
+.auth-headline { font-size:1.05rem; font-weight:700; color:var(--white); margin-bottom:4px; }
+.auth-subline { font-size:13px; color:var(--dim); margin-bottom:28px; line-height:1.55; }
+
+/* Toggle tabs */
+.auth-tabs { display:flex; background:var(--bg3); border:1px solid var(--border); border-radius:9px; padding:3px; margin-bottom:26px; position:relative; }
+.auth-tab {
+  flex:1; text-align:center; padding:7px; font-size:13px; font-weight:600;
+  color:var(--dim); cursor:pointer; border-radius:6px; transition:all .22s;
+  border:none; background:none; font-family:var(--font-display);
+}
+.auth-tab.active { background:var(--bg2); color:var(--white); box-shadow:0 2px 8px rgba(0,0,0,.3); }
+
+/* Google button */
+.auth-google-btn {
+  width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+  color:var(--white); padding:11px; border-radius:10px;
+  font-size:13.5px; font-weight:600; cursor:pointer; transition:all .22s;
+  font-family:var(--font-display); margin-bottom:20px;
+}
+.auth-google-btn:hover { background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.2); transform:translateY(-1px); }
+.google-icon { width:18px; height:18px; flex-shrink:0; }
+
+.auth-divider {
+  display:flex; align-items:center; gap:12px; margin-bottom:20px;
+}
+.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.auth-divider-text { font-size:11px; color:var(--dim); letter-spacing:1px; text-transform:uppercase; }
+
+.auth-form-group { margin-bottom:14px; }
+.auth-label {
+  display:block; font-size:11px; font-weight:700; color:var(--dim);
+  letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;
+}
+.auth-input {
+  width:100%; background:var(--bg3); border:1px solid rgba(255,255,255,.08);
+  color:var(--white); padding:11px 14px; border-radius:9px;
+  font-family:var(--font-display); font-size:13.5px; outline:none;
+  transition:border-color .18s, box-shadow .18s;
+}
+.auth-input:focus { border-color:rgba(79,70,229,.5); box-shadow:0 0 0 3px rgba(79,70,229,.1); }
+.auth-input::placeholder { color:var(--dim); }
+
+.auth-input-wrap { position:relative; }
+.auth-input-wrap .auth-input { padding-right:40px; }
+.auth-eye { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--dim); cursor:pointer; display:flex; align-items:center; }
+
+.auth-name-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+.auth-forgot { font-size:12px; color:var(--violet-l); cursor:pointer; text-align:right; margin-top:-8px; margin-bottom:14px; display:block; transition:color .18s; }
+.auth-forgot:hover { color:var(--cyan); }
+
+.auth-submit-btn {
+  width:100%; background:var(--grad-v); border:none; color:#fff;
+  padding:13px; border-radius:10px; font-weight:700; font-size:14px;
+  cursor:pointer; transition:all .22s; font-family:var(--font-display);
+  margin-top:4px; position:relative; overflow:hidden;
+  box-shadow:0 6px 24px rgba(79,70,229,.35);
+}
+.auth-submit-btn:hover { opacity:.9; transform:translateY(-1px); box-shadow:0 10px 32px rgba(79,70,229,.45); }
+.auth-submit-btn:active { transform:translateY(0); }
+
+.auth-terms { font-size:11px; color:var(--dim); text-align:center; margin-top:16px; line-height:1.6; }
+.auth-terms a { color:var(--violet-l); cursor:pointer; text-decoration:none; }
+.auth-terms a:hover { color:var(--cyan); }
+
+.auth-close {
+  position:absolute; top:16px; right:16px;
+  width:30px; height:30px; background:rgba(255,255,255,.06); border:1px solid var(--border);
+  border-radius:7px; color:var(--dim); cursor:pointer; display:flex; align-items:center;
+  justify-content:center; transition:all .18s; z-index:2;
+}
+.auth-close:hover { background:rgba(255,255,255,.12); color:var(--white); }
+
+.auth-error {
+  background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25);
+  color:#fca5a5; font-size:12px; padding:9px 13px; border-radius:7px;
+  margin-bottom:14px; display:none; align-items:center; gap:7px;
+}
+.auth-error.show { display:flex; }
+
+/* Password strength */
+.pw-strength { display:flex; gap:4px; margin-top:7px; }
+.pw-bar { flex:1; height:3px; border-radius:2px; background:var(--bg4); transition:background .3s; }
+.pw-bar.weak { background:var(--danger); }
+.pw-bar.medium { background:var(--gold); }
+.pw-bar.strong { background:var(--cyan); }
+
+/* ── MODALS (existing) ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1500;
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal-sheet { background:var(--bg1); border:1px solid var(--border); border-radius:16px 16px 0 0; width:100%; max-width:620px; max-height:92vh; overflow-y:auto; padding:28px 24px; transform:translateY(100%); transition:transform .32s var(--ease); }
+.modal-sheet.open { transform:translateY(0); }
+@media(min-width:640px){
+  .modal-overlay { align-items:center; }
+  .modal-sheet { border-radius:16px; transform:scale(.96); }
+  .modal-overlay.open .modal-sheet { transform:scale(1); }
+}
+.modal-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+.modal-title { font-size:1.1rem; font-weight:700; color:var(--white); }
+.modal-close { width:28px; height:28px; background:rgba(255,255,255,.06); border:none; border-radius:6px; color:var(--silver); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .18s; }
+.modal-close:hover { background:rgba(255,255,255,.12); }
+.form-group { margin-bottom:16px; }
+.form-label { font-size:12px; font-weight:600; color:var(--dim); margin-bottom:5px; display:block; letter-spacing:.3px; }
+.form-input, .form-select, .form-textarea { width:100%; background:var(--bg3); border:1px solid var(--border); color:var(--white); padding:10px 14px; border-radius:8px; font-family:var(--font-display); font-size:13.5px; outline:none; transition:border-color .18s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color:rgba(79,70,229,.5); }
+.form-select { appearance:none; cursor:pointer; }
+option { background:var(--bg1); }
+.form-textarea { resize:vertical; min-height:80px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.budget-toggle { display:flex; gap:6px; }
+.budget-btn { flex:1; padding:8px 6px; border-radius:7px; border:1px solid var(--border); background:var(--bg3); color:var(--dim); font-size:12px; cursor:pointer; transition:all .18s; text-align:center; font-family:var(--font-display); }
+.budget-btn.active { border-color:rgba(234,179,8,.45); background:rgba(234,179,8,.08); color:var(--gold); font-weight:600; }
+.form-btn { width:100%; background:var(--grad-v); border:none; color:#fff; padding:12px; border-radius:9px; font-weight:700; font-size:14px; cursor:pointer; margin-top:6px; transition:all .22s; font-family:var(--font-display); }
+.form-btn:hover { opacity:.88; transform:translateY(-1px); box-shadow:0 8px 28px rgba(79,70,229,.4); }
+
+.detail-sheet { max-width:680px; }
+.detail-hero { height:180px; background:var(--bg3); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:3.5rem; position:relative; margin-bottom:20px; border:1px solid var(--border); }
+.detail-cat-chip { position:absolute; top:12px; left:12px; background:rgba(9,9,11,.75); backdrop-filter:blur(8px); border:1px solid var(--border); color:var(--silver); font-size:10px; font-weight:600; padding:3px 9px; border-radius:4px; letter-spacing:.5px; text-transform:uppercase; }
+.detail-budget-chip { position:absolute; top:12px; right:12px; font-size:14px; color:var(--gold); }
+.detail-name { font-size:1.3rem; font-weight:800; color:var(--white); flex:1; line-height:1.2; }
+.detail-stars { display:flex; align-items:center; gap:4px; color:var(--gold); font-size:13px; margin-bottom:14px; }
+.detail-meta-grid { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+.detail-meta-chip { display:flex; align-items:center; gap:5px; font-size:12px; color:var(--dim); background:var(--bg3); border:1px solid var(--border); padding:5px 11px; border-radius:6px; }
+.detail-desc { font-size:13.5px; color:var(--silver); line-height:1.7; margin-bottom:18px; }
+.detail-actions-row { display:flex; gap:8px; flex-wrap:wrap; }
+.detail-action-btn { display:flex; align-items:center; gap:6px; padding:8px 16px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; transition:all .18s; border:none; font-family:var(--font-display); }
+.d-upvote { background:rgba(79,70,229,.12); border:1px solid rgba(79,70,229,.3) !important; color:var(--violet-l); }
+.d-map { background:rgba(6,182,212,.08); border:1px solid rgba(6,182,212,.3) !important; color:var(--cyan); text-decoration:none; }
+.d-save { background:rgba(234,179,8,.08); border:1px solid rgba(234,179,8,.25) !important; color:var(--gold); }
+.d-share { background:rgba(255,255,255,.05); border:1px solid var(--border) !important; color:var(--silver); }
+
+.fab { position:fixed; bottom:76px; right:18px; z-index:700; width:50px; height:50px; border-radius:50%; background:var(--grad-v); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 24px rgba(79,70,229,.45); transition:all .22s; }
+.fab:hover { transform:scale(1.08); box-shadow:0 10px 32px rgba(79,70,229,.55); }
+
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; z-index:800; display:none; background:rgba(9,9,11,.95); backdrop-filter:blur(16px); border-top:1px solid var(--border); padding:6px 4px; justify-content:space-around; }
+.bnav-btn { display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px 12px; color:var(--dim); font-size:10px; font-weight:500; cursor:pointer; border:none; background:none; transition:color .18s; font-family:var(--font-display); }
+.bnav-btn.active { color:var(--violet-l); }
+.bnav-btn i { transition:transform .18s; }
+.bnav-btn.active i { transform:scale(1.1); }
+
+.toast { position:fixed; bottom:88px; left:50%; transform:translateX(-50%) translateY(12px); background:var(--bg2); border:1px solid rgba(255,255,255,.1); color:var(--white); padding:10px 20px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:var(--shadow-md); z-index:4000; opacity:0; transition:all .28s; pointer-events:none; display:flex; align-items:center; gap:8px; white-space:nowrap; max-width:90vw; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+footer { background:var(--bg1); border-top:1px solid var(--border); padding:56px 0 32px; }
+.footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:48px; }
+.footer-logo { font-size:1.1rem; font-weight:800; margin-bottom:10px; display:flex; align-items:baseline; gap:1px; }
+.footer-desc { font-size:12.5px; color:var(--dim); line-height:1.7; max-width:280px; margin-bottom:18px; }
+.footer-socials { display:flex; gap:8px; }
+.social-icon { width:32px; height:32px; border-radius:7px; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--dim); cursor:pointer; transition:all .2s; }
+.social-icon:hover { background:rgba(79,70,229,.15); color:var(--violet-l); border-color:rgba(79,70,229,.3); }
+.footer-col-title { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--silver); margin-bottom:14px; }
+.footer-link { display:block; font-size:13px; color:var(--dim); margin-bottom:8px; cursor:pointer; transition:color .18s; text-decoration:none; }
+.footer-link:hover { color:var(--silver); }
+.footer-bottom { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-top:1px solid var(--border); padding-top:24px; }
+.footer-copy { font-size:12px; color:var(--dim); }
+.footer-stats { font-size:12px; color:var(--dim); }
+
+.confetti-piece { position:fixed; pointer-events:none; z-index:9999; border-radius:2px; animation:confettiFall var(--dur) ease-in forwards; }
+
+.pref-row { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg3); border-radius:8px; margin-bottom:8px; font-size:13px; }
+.pref-key { color:var(--dim); }
+.pref-val { color:var(--white); font-weight:600; }
+
+@media(max-width:900px){
+  .steps-row { grid-template-columns:repeat(3,1fr); }
+  .steps-row .step-item:nth-child(3)::after { display:none; }
+  .community-grid { grid-template-columns:1fr; }
+  .budget-grid { grid-template-columns:1fr; }
+  .profile-layout { grid-template-columns:1fr; }
+  .footer-grid { grid-template-columns:1fr 1fr; }
+  .profile-identity-card { position:static; }
+}
+@media(max-width:640px){
+  #nav .nav-center { display:none; }
+  .hamburger { display:flex; align-items:center; }
+  .fab { bottom:72px; }
+  .bottom-nav { display:flex; }
+  .steps-row { grid-template-columns:1fr 1fr; }
+  .compare-grid { grid-template-columns:1fr; gap:8px; }
+  .compare-vs { padding:4px 0; }
+  .hero h1 { font-size:1.9rem; }
+  .stat-item { padding:14px 18px; }
+  .cat-grid { grid-template-columns:repeat(3,1fr); }
+  .footer-grid { grid-template-columns:1fr; gap:28px; }
+  .auth-panel { padding:28px 20px; }
+  .auth-name-row { grid-template-columns:1fr; }
+}
+@media(max-width:400px){ .cat-grid { grid-template-columns:repeat(2,1fr); } }
+@media(prefers-reduced-motion:reduce){ *,*::before,*::after{ animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+</style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav id="nav">
+  <a class="nav-logo" href="#" onclick="scrollTo('hero')">
+    <span class="logo-devanagari">शहर</span><span class="logo-buddy">Buddy</span>
+  </a>
+  <div class="nav-center">
+    <button class="nav-link active" onclick="scrollTo('hero')">Home</button>
+    <button class="nav-link" onclick="scrollTo('explore')">Explore</button>
+    <button class="nav-link" onclick="scrollTo('community')">Community</button>
+    <button class="nav-link" onclick="requireAuth('addModal')">Add Place</button>
+    <button class="nav-link" onclick="requireAuth('rewards')">Rewards</button>
+  </div>
+  <div class="nav-right">
+    <div class="nav-city-badge" id="navCity" onclick="scrollTo('explore')">
+      <i data-lucide="map-pin" width="12" height="12"></i> <span>Surat</span>
+    </div>
+    <div id="navAuthArea">
+      <button class="btn-primary" onclick="openAuthModal('signin')">Sign In</button>
+    </div>
+    <button class="hamburger" onclick="openDrawer()"><i data-lucide="menu" width="20" height="20"></i></button>
+  </div>
+</nav>
+
+<!-- ── DRAWER ── -->
+<div class="drawer-overlay" id="dOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" onclick="closeDrawer()"><i data-lucide="x" width="16" height="16"></i></button>
+  <div class="drawer-logo">
+    <span class="logo-devanagari" style="font-family:'Noto Sans Devanagari',sans-serif;color:#fafafa;font-weight:800">शहर</span><span class="logo-buddy" style="color:#818cf8;font-weight:800">Buddy</span>
+  </div>
+  <div class="drawer-nav">
+    <button class="drawer-item" onclick="scrollTo('hero');closeDrawer()">🏠 Home</button>
+    <button class="drawer-item" onclick="scrollTo('explore');closeDrawer()">🗺️ Explore</button>
+    <button class="drawer-item" onclick="scrollTo('community');closeDrawer()">👥 Community</button>
+    <button class="drawer-item" onclick="requireAuth('addModal');closeDrawer()">➕ Add Place</button>
+    <button class="drawer-item" onclick="requireAuth('rewards');closeDrawer()">🏆 Rewards</button>
+    <button class="drawer-item" onclick="requireAuth('profile');closeDrawer()">👤 Profile</button>
+  </div>
+</div>
+
+<!-- ── HERO ── -->
+<section id="hero" style="padding:0">
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-tag au d1"><span></span> India's City Discovery Platform</div>
+  <h1 class="au d2">Find your place in<br/><em>any Indian city</em></h1>
+  <p class="hero-sub au d3">Hyperlocal essentials, community tips, and trusted spots — filtered by your budget, lifestyle, and how you commute.</p>
+  <div class="search-wrap au d4">
+    <div class="search-bar">
+      <div class="search-icon-wrap"><i data-lucide="search" width="16" height="16"></i></div>
+      <input id="cityInput" type="text" placeholder="Search any Indian city — Surat, Mumbai, Pune, Delhi…" autocomplete="off"
+        oninput="filterCities(this.value)" onfocus="if(this.value.trim()) openDD()" onblur="setTimeout(closeDD,200)"/>
+      <div class="search-sep"></div>
+      <button class="search-submit" onclick="doSearch()">
+        <i data-lucide="navigation" width="13" height="13"></i> Explore
+      </button>
+    </div>
+    <div class="search-dropdown" id="cityDD"></div>
+    <div class="city-pills" id="cityPills">
+      <div class="city-pill active" onclick="setCity('Surat')">Surat</div>
+      <div class="city-pill" onclick="setCity('Mumbai')">Mumbai</div>
+      <div class="city-pill" onclick="setCity('Delhi')">Delhi</div>
+      <div class="city-pill" onclick="setCity('Bangalore')">Bangalore</div>
+      <div class="city-pill" onclick="setCity('Pune')">Pune</div>
+      <div class="city-pill" onclick="setCity('Hyderabad')">Hyderabad</div>
+      <div class="city-pill" onclick="setCity('Jaipur')">Jaipur</div>
+      <div class="city-pill" onclick="setCity('Ahmedabad')">Ahmedabad</div>
+      <div class="city-pill" onclick="setCity('Chennai')">Chennai</div>
+      <div class="city-pill" onclick="setCity('Kochi')">Kochi</div>
+    </div>
+  </div>
+  <div class="stats-row au d5">
+    <div class="stat-item"><div class="stat-num" data-target="500">0</div><div class="stat-label">Cities</div></div>
+    <div class="stat-item"><div class="stat-num" data-target="2500000">0</div><div class="stat-label">Places Listed</div></div>
+    <div class="stat-item"><div class="stat-num" data-target="50000">0</div><div class="stat-label">Contributors</div></div>
+    <div class="stat-item"><div class="stat-num" data-target="1200000">0</div><div class="stat-label">Monthly Users</div></div>
+  </div>
+  <div class="scroll-cue au d6"><i data-lucide="chevron-down" width="18" height="18"></i></div>
+</div>
+</section>
+
+<!-- ── TICKER ── -->
+<div class="ticker-bar">
+  <div class="ticker-track" id="ticker"></div>
+</div>
+
+<!-- ── EXPLORER ── -->
+<section id="explore">
+<div class="container">
+  <div class="explorer-header reveal">
+    <div>
+      <div class="section-eyebrow"><i data-lucide="map" width="11" height="11"></i> City Explorer</div>
+      <div class="explorer-city" id="explorerCity">Surat, Gujarat</div>
+      <div class="explorer-meta" id="explorerMeta">Diamond &amp; Textile City · Gujarat, India</div>
+    </div>
+    <button class="btn-ghost" onclick="requireAuth('addModal')" style="align-self:flex-start">
+      <i data-lucide="plus" width="13" height="13"></i> Add Place
+    </button>
+  </div>
+  <div class="tabs-bar reveal" role="tablist">
+    <button class="tab-btn active" onclick="switchTab(this,'essentials')"><i data-lucide="grid-2x2" width="13" height="13"></i> Essentials</button>
+    <button class="tab-btn" onclick="switchTab(this,'explore-tab')"><i data-lucide="compass" width="13" height="13"></i> Explore</button>
+    <button class="tab-btn" onclick="switchTab(this,'tips-tab')"><i data-lucide="message-circle" width="13" height="13"></i> Tips</button>
+    <button class="tab-btn" onclick="switchTab(this,'budget-tab')"><i data-lucide="bar-chart-2" width="13" height="13"></i> Budget</button>
+    <button class="tab-btn" onclick="switchTab(this,'relo-tab')"><i data-lucide="rocket" width="13" height="13"></i> Moving Here?</button>
+  </div>
+  <div class="tab-panel active" id="tab-essentials">
+    <div class="cat-grid" id="catGrid"></div>
+    <div id="placesArea"></div>
+  </div>
+  <div class="tab-panel" id="tab-explore-tab">
+    <div class="places-grid" id="exploreGrid" style="margin-top:0"></div>
+  </div>
+  <div class="tab-panel" id="tab-tips-tab">
+    <div class="tips-grid" id="tipsGrid"></div>
+  </div>
+  <div class="tab-panel" id="tab-budget-tab">
+    <div class="budget-grid" id="budgetLayout"></div>
+  </div>
+  <div class="tab-panel" id="tab-relo-tab">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" id="reloLayout">
+      <div class="relo-card" id="reloQuiz"></div>
+      <div id="reloResultArea" style="display:none"></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ── COMMUNITY ── -->
+<section id="community">
+<div class="container">
+  <div class="section-eyebrow reveal"><i data-lucide="users" width="11" height="11"></i> Community</div>
+  <div class="section-title reveal">Locals know best</div>
+  <p class="section-sub reveal" style="margin-bottom:28px">Real knowledge from people who actually live here. Contribute yours and earn points.</p>
+  <div class="community-grid">
+    <div class="community-feed reveal" id="communityFeed"></div>
+    <div class="points-card reveal" id="pointsCard"></div>
+  </div>
+</div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ── REWARDS ── -->
+<section id="rewards">
+<div class="container">
+  <div class="section-eyebrow reveal"><i data-lucide="trophy" width="11" height="11"></i> Rewards</div>
+  <div class="section-title reveal">Top Contributors</div>
+  <p class="section-sub reveal" style="margin-bottom:28px">Earn points, climb tiers, become a City Legend.</p>
+  <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:24px;align-items:start">
+    <div class="checklist-card reveal" id="checklistCard"></div>
+    <div class="reveal" style="overflow-x:auto">
+      <table class="leaderboard-table" id="lbTable"></table>
+    </div>
+  </div>
+</div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ── HOW IT WORKS ── -->
+<section>
+<div class="container">
+  <div class="section-eyebrow reveal"><i data-lucide="zap" width="11" height="11"></i> Process</div>
+  <div class="section-title reveal">How शहरBuddy works</div>
+  <div class="steps-row reveal" id="stepsRow"></div>
+</div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ── COMPARE ── -->
+<section>
+<div class="container">
+  <div class="section-eyebrow reveal"><i data-lucide="arrow-left-right" width="11" height="11"></i> Compare</div>
+  <div class="section-title reveal">City vs City</div>
+  <p class="section-sub reveal" style="margin-bottom:24px">Compare two cities side-by-side to make an informed choice.</p>
+  <div class="compare-grid reveal" id="compareGrid"></div>
+</div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ── PROFILE ── -->
+<section id="profile">
+<div class="container">
+  <div class="section-eyebrow reveal"><i data-lucide="user" width="11" height="11"></i> Profile</div>
+  <div class="section-title reveal">My शहरBuddy</div>
+  <div class="profile-layout reveal" id="profileArea" style="margin-top:24px"></div>
+</div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+<div class="container">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo">
+        <span class="logo-devanagari" style="font-family:'Noto Sans Devanagari',sans-serif;color:#fafafa;font-weight:800;font-size:1.1rem">शहर</span>
+        <span class="logo-buddy" style="color:#818cf8;font-weight:800;font-size:1.1rem">Buddy</span>
+      </div>
+      <p class="footer-desc">India's most trusted city discovery platform. Helping new residents settle in, one neighborhood at a time.</p>
+      <div class="footer-socials">
+        <div class="social-icon"><i data-lucide="twitter" width="14" height="14"></i></div>
+        <div class="social-icon"><i data-lucide="instagram" width="14" height="14"></i></div>
+        <div class="social-icon"><i data-lucide="linkedin" width="14" height="14"></i></div>
+        <div class="social-icon"><i data-lucide="youtube" width="14" height="14"></i></div>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Platform</div>
+      <a class="footer-link" href="#">Explore Cities</a>
+      <a class="footer-link" href="#">Add a Place</a>
+      <a class="footer-link" href="#">Leaderboard</a>
+      <a class="footer-link" href="#">Buddy Points</a>
+    </div>
+    <div>
+      <div class="footer-col-title">Company</div>
+      <a class="footer-link" href="#">About</a>
+      <a class="footer-link" href="#">Blog</a>
+      <a class="footer-link" href="#">Careers</a>
+      <a class="footer-link" href="#">Press</a>
+    </div>
+    <div>
+      <div class="footer-col-title">Legal</div>
+      <a class="footer-link" href="#">Privacy Policy</a>
+      <a class="footer-link" href="#">Terms of Use</a>
+      <a class="footer-link" href="#">Help Center</a>
+      <a class="footer-link" href="#">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 शहरBuddy · Made for India's new residents</span>
+    <span class="footer-stats">500+ Cities · 2.5M+ Places · 50K+ Contributors</span>
+  </div>
+</div>
+</footer>
+
+<!-- FAB -->
+<button class="fab" onclick="requireAuth('addModal')" aria-label="Add Place">
+  <i data-lucide="plus" width="20" height="20"></i>
+</button>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bnav-btn active" onclick="scrollTo('hero');setActiveNav(this)"><i data-lucide="home" width="18" height="18"></i>Home</button>
+  <button class="bnav-btn" onclick="scrollTo('explore');setActiveNav(this)"><i data-lucide="compass" width="18" height="18"></i>Explore</button>
+  <button class="bnav-btn" onclick="requireAuth('addModal')"><i data-lucide="plus-circle" width="18" height="18"></i>Add</button>
+  <button class="bnav-btn" onclick="scrollTo('community');setActiveNav(this)"><i data-lucide="users" width="18" height="18"></i>Community</button>
+  <button class="bnav-btn" onclick="requireAuth('profile');setActiveNav(this)"><i data-lucide="user" width="18" height="18"></i>Profile</button>
+</nav>
+
+<!-- ════════════════════════════════════════════
+     AUTH MODAL — PREMIUM GLASSMORPHISM
+════════════════════════════════════════════ -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-panel" id="authPanel">
+    <button class="auth-close" onclick="closeAuthModal()"><i data-lucide="x" width="13" height="13"></i></button>
+
+    <!-- Logo -->
+    <div class="auth-logo">
+      <span class="logo-devanagari" style="font-family:'Noto Sans Devanagari',sans-serif;color:#fafafa;font-weight:800">शहर</span>
+      <span class="logo-buddy" style="color:#818cf8;font-weight:800">Buddy</span>
+    </div>
+    <div class="auth-headline" id="authHeadline">Welcome back</div>
+    <div class="auth-subline" id="authSubline">Sign in to discover, contribute, and earn Buddy Points.</div>
+
+    <!-- Tab toggle -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabSignin" onclick="switchAuthTab('signin')">Sign In</button>
+      <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Create Account</button>
+    </div>
+
+    <!-- Error message -->
+    <div class="auth-error" id="authError">
+      <i data-lucide="alert-circle" width="14" height="14"></i>
+      <span id="authErrorText">Invalid credentials. Please try again.</span>
+    </div>
+
+    <!-- Google button -->
+    <button class="auth-google-btn" onclick="simulateGoogleAuth()">
+      <svg class="google-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-divider"><span class="auth-divider-text">or</span></div>
+
+    <!-- Sign-in fields -->
+    <div id="authSigninFields">
+      <div class="auth-form-group">
+        <label class="auth-label">Email</label>
+        <input class="auth-input" id="siEmail" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="auth-form-group">
+        <label class="auth-label">Password</label>
+        <div class="auth-input-wrap">
+          <input class="auth-input" id="siPassword" type="password" placeholder="Enter your password" oninput="checkPwStrength(this,'siStrength')"/>
+          <button class="auth-eye" type="button" onclick="togglePw('siPassword',this)"><i data-lucide="eye" width="14" height="14"></i></button>
+        </div>
+        <div class="pw-strength" id="siStrength" style="margin-top:7px;opacity:0">
+          <div class="pw-bar" id="siBar1"></div><div class="pw-bar" id="siBar2"></div><div class="pw-bar" id="siBar3"></div>
+        </div>
+      </div>
+      <a class="auth-forgot" onclick="toast('Password reset link sent! 📧')">Forgot password?</a>
+      <button class="auth-submit-btn" onclick="handleSignIn()">Sign In to शहरBuddy</button>
+    </div>
+
+    <!-- Sign-up fields -->
+    <div id="authSignupFields" style="display:none">
+      <div class="auth-name-row auth-form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="auth-label">First Name</label>
+          <input class="auth-input" id="suFirst" type="text" placeholder="Rahul"/>
+        </div>
+        <div>
+          <label class="auth-label">Last Name</label>
+          <input class="auth-input" id="suLast" type="text" placeholder="Patel"/>
+        </div>
+      </div>
+      <div class="auth-form-group">
+        <label class="auth-label">Email</label>
+        <input class="auth-input" id="suEmail" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="auth-form-group">
+        <label class="auth-label">Password</label>
+        <div class="auth-input-wrap">
+          <input class="auth-input" id="suPassword" type="password" placeholder="Min. 8 characters" oninput="checkPwStrength(this,'suStrength')"/>
+          <button class="auth-eye" type="button" onclick="togglePw('suPassword',this)"><i data-lucide="eye" width="14" height="14"></i></button>
+        </div>
+        <div class="pw-strength" id="suStrength" style="margin-top:7px;opacity:0">
+          <div class="pw-bar" id="suBar1"></div><div class="pw-bar" id="suBar2"></div><div class="pw-bar" id="suBar3"></div>
+        </div>
+      </div>
+      <button class="auth-submit-btn" onclick="handleSignUp()">Create My Account →</button>
+    </div>
+
+    <div class="auth-terms">
+      By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PLACE MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-sheet" id="addModalSheet">
+    <div class="modal-head">
+      <span class="modal-title">Add a New Place</span>
+      <button class="modal-close" onclick="closeModal('addModal')"><i data-lucide="x" width="14" height="14"></i></button>
+    </div>
+    <form onsubmit="submitPlace(event)">
+      <div class="form-group">
+        <label class="form-label">PLACE NAME *</label>
+        <input class="form-input" id="addPlaceName" placeholder="e.g., Chetan Juice Center" required/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">CATEGORY *</label>
+          <select class="form-select" id="addPlaceCat" required>
+            <option value="">Select…</option>
+            <option>Food &amp; Drinks</option><option>PG &amp; Housing</option>
+            <option>Healthcare</option><option>Transport</option>
+            <option>Shopping &amp; Markets</option><option>Religious Places</option>
+            <option>Parks &amp; Recreation</option><option>Banks &amp; ATMs</option>
+            <option>Education</option><option>Street Food</option>
+            <option>Cafes &amp; Tea Stalls</option><option>Salons &amp; Wellness</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CITY *</label>
+          <select class="form-select" id="addPlaceCity" required>
+            <option>Surat</option><option>Mumbai</option><option>Delhi</option>
+            <option>Bangalore</option><option>Pune</option><option>Hyderabad</option>
+            <option>Jaipur</option><option>Ahmedabad</option><option>Chennai</option><option>Kochi</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">AREA / LOCALITY</label>
+          <input class="form-input" id="addPlaceArea" placeholder="e.g., Adajan, Vesu"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PHONE (OPTIONAL)</label>
+          <input class="form-input" id="addPlacePhone" placeholder="+91 98765 43210"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">DESCRIPTION</label>
+        <textarea class="form-textarea" id="addPlaceDesc" placeholder="What makes this place special?" maxlength="300"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">BUDGET LEVEL</label>
+        <div class="budget-toggle" id="bToggle">
+          <div class="budget-btn active" onclick="selBudget(this)">₹ Budget</div>
+          <div class="budget-btn" onclick="selBudget(this)">₹₹ Mid</div>
+          <div class="budget-btn" onclick="selBudget(this)">₹₹₹ Premium</div>
+        </div>
+      </div>
+      <button type="submit" class="form-btn">Submit Place · Earn +50 Points</button>
+    </form>
+  </div>
+</div>
+
+<!-- PLACE DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-sheet detail-sheet" id="detailSheet">
+    <div class="modal-head">
+      <span class="modal-title" id="detailTitle">Place Details</span>
+      <button class="modal-close" onclick="closeModal('detailModal')"><i data-lucide="x" width="14" height="14"></i></button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════
+   DATA
+════════════════════════════════════════════ */
+const CITY_DB = [
+  {name:"Surat",     state:"Gujarat",      emoji:"🌆", tier:"Tier-1", for:"Diamonds & Textiles",  areas:["Adajan","Varachha","Nanpura","Athwa","Piplod","Vesu","Pal","Althan","Katargam","Udhna","Sarthana","Citylight"], transport:["BRTS","Auto Rickshaw","App Cabs","City Bus"], rent:{pg:"₹4k–8k",bhk1:"₹8k–15k",bhk2:"₹12k–25k"}},
+  {name:"Mumbai",    state:"Maharashtra",  emoji:"🏙️", tier:"Metro",  for:"Finance & Bollywood",  areas:["Bandra","Andheri","Powai","Dadar","Kurla","Borivali"],              transport:["Local Train","Metro","Bus","Auto","Cab"],    rent:{pg:"₹8k–18k",bhk1:"₹20k–45k",bhk2:"₹35k–75k"}},
+  {name:"Delhi",     state:"Delhi NCR",    emoji:"🏛️", tier:"Metro",  for:"Government & Culture", areas:["CP","Lajpat Nagar","Karol Bagh","Dwarka","Rohini","Noida"],        transport:["Metro","Bus","Auto","Cab"],                   rent:{pg:"₹6k–15k",bhk1:"₹12k–30k",bhk2:"₹20k–50k"}},
+  {name:"Bangalore", state:"Karnataka",    emoji:"💻", tier:"Metro",  for:"IT & Startups",        areas:["Koramangala","Whitefield","Indiranagar","HSR Layout","BTM Layout"], transport:["Metro","Bus","Auto","Cab"],                   rent:{pg:"₹7k–16k",bhk1:"₹14k–28k",bhk2:"₹25k–55k"}},
+  {name:"Pune",      state:"Maharashtra",  emoji:"🎓", tier:"Metro",  for:"Education & IT",       areas:["Koregaon Park","Hinjewadi","Baner","Viman Nagar","Kothrud"],        transport:["Bus","Auto","Cab","Bike"],                    rent:{pg:"₹5k–12k",bhk1:"₹10k–22k",bhk2:"₹18k–40k"}},
+  {name:"Hyderabad", state:"Telangana",    emoji:"🔬", tier:"Metro",  for:"Pharma & IT",          areas:["Banjara Hills","Jubilee Hills","Gachibowli","Madhapur"],            transport:["Metro","Bus","Auto","Cab"],                   rent:{pg:"₹6k–14k",bhk1:"₹12k–25k",bhk2:"₹20k–45k"}},
+  {name:"Jaipur",    state:"Rajasthan",    emoji:"🏰", tier:"Tier-1", for:"Tourism & Heritage",   areas:["Malviya Nagar","Vaishali Nagar","Mansarovar","C-Scheme"],           transport:["Bus","Auto","Cab"],                           rent:{pg:"₹4k–9k",bhk1:"₹8k–16k",bhk2:"₹13k–25k"}},
+  {name:"Ahmedabad", state:"Gujarat",      emoji:"🏗️", tier:"Metro",  for:"Textile & Business",   areas:["Satellite","Prahlad Nagar","Bopal","Maninagar","CG Road"],          transport:["BRTS","Auto","Cab","Bus"],                    rent:{pg:"₹4k–9k",bhk1:"₹8k–18k",bhk2:"₹14k–30k"}},
+  {name:"Chennai",   state:"Tamil Nadu",   emoji:"🌊", tier:"Metro",  for:"Manufacturing & IT",   areas:["Anna Nagar","Adyar","T.Nagar","Velachery","OMR"],                   transport:["Metro","MTC Bus","Auto","Cab"],               rent:{pg:"₹5k–12k",bhk1:"₹10k–22k",bhk2:"₹18k–40k"}},
+  {name:"Kochi",     state:"Kerala",       emoji:"🚢", tier:"Tier-1", for:"Backwaters & IT",      areas:["Marine Drive","Edapally","Kakkanad","Tripunithura","Fort Kochi"],    transport:["Metro","Ferry","Bus","Auto"],                 rent:{pg:"₹5k–10k",bhk1:"₹8k–18k",bhk2:"₹14k–28k"}},
+];
+
+const PLACES = {
+  "Surat": [
+    {name:"Sachin Patel Restaurant",     cat:"Food & Drinks",     icon:"🍽️", area:"Varachha",   budget:"₹",   rating:4.6, reviews:2100, tags:["gujarati-thali","undhiyu","famous"],    desc:"Legendary Surati thali. Home of the best Undhiyu in winter. Cash-only, always packed.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Sachin+Patel+Restaurant+Surat"},
+    {name:"Locho Stall — Ring Road",     cat:"Food & Drinks",     icon:"🥣", area:"Ring Road",   budget:"₹",   rating:4.9, reviews:4500, tags:["locho","breakfast","surati-special"],  desc:"The original Surati Locho. Steamed gram-flour snack, utterly unique to Surat. Go before 9 AM.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Locho+Ring+Road+Surat"},
+    {name:"Keval Sev Usal",              cat:"Food & Drinks",     icon:"🫕", area:"Citylight",   budget:"₹",   rating:4.9, reviews:3200, tags:["sev-usal","breakfast","1978"],          desc:"Family-run since 1978. Best sev usal in Surat. Arrives 7 AM, finishes by 10. Cash only.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Keval+Sev+Usal+Surat"},
+    {name:"Ponk Vadi Corner",            cat:"Street Food",       icon:"🌽", area:"Nanpura",     budget:"₹",   rating:4.7, reviews:870,  tags:["ponk","winter-special","seasonal"],    desc:"Surat's winter delicacy. Tender sorghum (ponk) stalls appear only Nov-Feb. Don't miss it.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Ponk+Vadi+Nanpura+Surat"},
+    {name:"Ghari Sweet Shop",            cat:"Street Food",       icon:"🍮", area:"Ambika Niketan",budget:"₹₹",rating:4.5, reviews:1200, tags:["ghari","sweets","surati"],             desc:"Famous Surati Ghari — rich ghee-filled pastry. Best gifted in festival season.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Ghari+Sweet+Shop+Surat"},
+    {name:"StayEasy PG — Adajan",        cat:"PG & Housing",      icon:"🏠", area:"Adajan",      budget:"₹",   rating:4.3, reviews:210,  tags:["pg","wifi","meals-included"],          desc:"Clean, affordable PG with meals. Popular with migrant workers. BRTS stop nearby.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=PG+Accommodation+Adajan+Surat"},
+    {name:"Piplod Residency PG",         cat:"PG & Housing",      icon:"🏡", area:"Piplod",      budget:"₹₹",  rating:4.4, reviews:145,  tags:["pg","furnished","quiet"],              desc:"Well-maintained PG in upscale Piplod area. AC rooms. Suitable for working professionals.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=PG+Piplod+Surat"},
+    {name:"New Civil Hospital Surat",    cat:"Healthcare",        icon:"🏥", area:"Majura Gate",  budget:"₹",   rating:4.1, reviews:560,  tags:["government","24x7","emergency"],       desc:"Largest government hospital in South Gujarat. 24x7 emergency. All departments available.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=New+Civil+Hospital+Majura+Gate+Surat"},
+    {name:"PharmEasy Medical — Adajan",  cat:"Healthcare",        icon:"💊", area:"Adajan",      budget:"₹",   rating:4.3, reviews:320,  tags:["pharmacy","24x7","delivery"],          desc:"Full-range pharmacy, open 24x7. Home delivery available. Prescription and OTC medicines.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=PharmEasy+Adajan+Surat"},
+    {name:"Surat BRTS Udhna Darwaja",   cat:"Transport",         icon:"🚌", area:"Udhna",       budget:"₹",   rating:4.0, reviews:430,  tags:["brts","bus","cheap"],                  desc:"Main BRTS junction. Affordable city bus rapid transit. Connects all major areas of Surat.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=BRTS+Udhna+Darwaja+Surat"},
+    {name:"Surat Railway Station",       cat:"Transport",         icon:"🚂", area:"Surat Central", budget:"₹", rating:3.9, reviews:980,  tags:["railway","intercity","main"],          desc:"Main railway station. Well-connected to Mumbai, Delhi, Ahmedabad, and all Gujarat cities.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Surat+Railway+Station"},
+    {name:"Textile Market Sarthana",     cat:"Shopping & Markets",icon:"🧵", area:"Sarthana",    budget:"₹",   rating:4.5, reviews:980,  tags:["wholesale","textiles","asia-biggest"], desc:"Asia's largest textile market. Thousands of shops. Both wholesale and retail. Unbeatable prices.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Textile+Market+Sarthana+Surat"},
+    {name:"VR Mall Surat",               cat:"Shopping & Markets",icon:"🏬", area:"Dumas Road",  budget:"₹₹₹",rating:4.4, reviews:3187, tags:["mall","multiplex","brands"],           desc:"Surat's biggest premium mall. 200+ brands, food court, and a 4-screen PVR multiplex.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=VR+Mall+Surat"},
+    {name:"Meena Bazar Old City",        cat:"Shopping & Markets",icon:"🛍️", area:"Old City",    budget:"₹",   rating:4.2, reviews:650,  tags:["street-shopping","bargain","old-city"],desc:"Dense street market in old Surat. Sarees, accessories, electronics — everything negotiable.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Meena+Bazar+Old+City+Surat"},
+    {name:"ISKCON Temple Surat",         cat:"Religious Places",  icon:"🛕", area:"Jahangirpura", budget:"₹", rating:4.8, reviews:1890, tags:["temple","prasadam","marble"],          desc:"Stunning marble ISKCON temple. Free prasadam daily. Very peaceful atmosphere, well-maintained.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=ISKCON+Temple+Surat"},
+    {name:"Chintamani Jain Temple",      cat:"Religious Places",  icon:"🙏", area:"Gopipura",    budget:"₹",   rating:4.7, reviews:710,  tags:["jain","heritage","carvings"],          desc:"Ancient Jain temple with intricate marble carvings. A masterpiece of traditional craftsmanship.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Chintamani+Jain+Temple+Surat"},
+    {name:"Dumas Beach",                 cat:"Parks & Recreation",icon:"🏖️", area:"Dumas",       budget:"₹",   rating:4.6, reviews:2341, tags:["beach","evening","famous"],            desc:"Famous black sand beach. Best visited at sunset. Fresh seafood stalls line the shore.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Dumas+Beach+Surat"},
+    {name:"Gopi Talav",                  cat:"Parks & Recreation",icon:"🌳", area:"Nanpura",     budget:"₹",   rating:4.3, reviews:760,  tags:["lake","garden","heritage"],            desc:"300-year-old lake in city centre. Evening walk destination. Historical benches, peaceful vibe.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Gopi+Talav+Surat"},
+    {name:"SBI Branch — Adajan",         cat:"Banks & ATMs",      icon:"🏦", area:"Adajan",      budget:"₹",   rating:3.9, reviews:190,  tags:["sbi","atm","loans"],                   desc:"Full-service SBI branch. ATM, locker facility, home loans, and all banking services.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=State+Bank+of+India+Adajan+Surat"},
+    {name:"Chai Sutta Bar — Adajan",     cat:"Cafes & Tea Stalls",icon:"☕", area:"Adajan",      budget:"₹",   rating:4.7, reviews:1800, tags:["matka-chai","24hrs","youth"],          desc:"Chai in clay matkas, 24x7 open. The go-to late-night hangout for Surat's college crowd.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Chai+Sutta+Bar+Adajan+Surat"},
+    {name:"Starbucks Reserve — VR Mall", cat:"Cafes & Tea Stalls",icon:"☕", area:"Dumas Road",  budget:"₹₹₹",rating:4.3, reviews:890,  tags:["coffee","premium","wifi"],             desc:"Full-service Starbucks inside VR Mall. Good wifi, clean seating. Pricy but worth it for work.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Starbucks+VR+Mall+Surat"},
+  ],
+  "Mumbai": [
+    {name:"Gateway of India",            cat:"Parks & Recreation",icon:"🏛️", area:"Colaba",      budget:"₹",   rating:4.8, reviews:12000,tags:["iconic","waterfront","heritage"],      desc:"Mumbai's iconic colonial monument. Best at sunrise. Boat rides to Elephanta Caves nearby.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Gateway+of+India+Mumbai"},
+    {name:"Juhu Beach",                  cat:"Parks & Recreation",icon:"🏖️", area:"Juhu",        budget:"₹",   rating:4.3, reviews:8900, tags:["beach","bhelpuri","celebrity-area"],   desc:"Iconic beach known for bhelpuri, pav bhaji, and celebrity sightings at sunset.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Juhu+Beach+Mumbai"},
+    {name:"Crawford Market",             cat:"Shopping & Markets",icon:"🏪", area:"CST",          budget:"₹",   rating:4.2, reviews:3400, tags:["wholesale","fruits","oldest"],         desc:"Mumbai's oldest market (1869). Best for fresh fruit, vegetables, and wholesale goods.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Crawford+Market+Mumbai"},
+    {name:"KEM Hospital",                cat:"Healthcare",        icon:"🏥", area:"Parel",        budget:"₹",   rating:4.2, reviews:1200, tags:["government","24x7","research"],        desc:"One of Mumbai's best public hospitals. Leading research facility, all specializations.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=KEM+Hospital+Parel+Mumbai"},
+  ],
+  "Delhi": [
+    {name:"Chandni Chowk",               cat:"Shopping & Markets",icon:"🏪", area:"Old Delhi",   budget:"₹",   rating:4.5, reviews:9800, tags:["historic","street-food","wholesale"],  desc:"400-year-old bazaar. Best for street food, silver jewellery, and wholesale spices.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Chandni+Chowk+Delhi"},
+    {name:"India Gate",                  cat:"Parks & Recreation",icon:"🏛️", area:"Central Delhi",budget:"₹",  rating:4.8, reviews:15000,tags:["iconic","park","historic"],            desc:"War memorial with vast lawns. Evening picnic destination. Beautiful light at dusk.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=India+Gate+New+Delhi"},
+    {name:"Sarojini Nagar Market",       cat:"Shopping & Markets",icon:"🛍️", area:"South Delhi", budget:"₹",   rating:4.4, reviews:7600, tags:["fashion","bargain","clothes"],         desc:"Export surplus fashion at rock-bottom prices. Ultimate budget shopping destination.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Sarojini+Nagar+Market+Delhi"},
+    {name:"AIIMS Delhi",                 cat:"Healthcare",        icon:"🏥", area:"Ansari Nagar", budget:"₹",  rating:4.5, reviews:2400, tags:["premier","research","all-specialties"], desc:"India's most prestigious public hospital. Best specialists in the country.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=AIIMS+Delhi"},
+  ],
+  "Bangalore": [
+    {name:"Lalbagh Botanical Garden",    cat:"Parks & Recreation",icon:"🌳", area:"Mavalli",     budget:"₹",   rating:4.6, reviews:5400, tags:["garden","heritage","flowers"],         desc:"240-year-old botanical garden. 1,000+ plant species and a stunning glass house.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Lalbagh+Botanical+Garden+Bangalore"},
+    {name:"MTR — Mavalli Tiffin Rooms",  cat:"Food & Drinks",     icon:"🍽️", area:"Lalbagh",     budget:"₹",   rating:4.7, reviews:6800, tags:["iconic","breakfast","1924"],           desc:"Est. 1924. Legendary masala dosa and rava idli. Join the queue — it moves fast.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=MTR+Mavalli+Tiffin+Rooms+Bangalore"},
+    {name:"Commercial Street",           cat:"Shopping & Markets",icon:"🏪", area:"Shivajinagar", budget:"₹₹", rating:4.3, reviews:4200, tags:["shopping","clothes","accessories"],    desc:"Bangalore's most popular shopping street. Best for clothes, cosmetics, and accessories.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Commercial+Street+Bangalore"},
+  ],
+  "Jaipur": [
+    {name:"Hawa Mahal",                  cat:"Parks & Recreation",icon:"🏰", area:"Pink City",   budget:"₹",   rating:4.8, reviews:11000,tags:["iconic","photography","history"],      desc:"953-windowed façade built for royal ladies. Best photographed from the opposite café.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Hawa+Mahal+Jaipur"},
+    {name:"Johari Bazaar",               cat:"Shopping & Markets",icon:"💎", area:"Old City",    budget:"₹₹",  rating:4.5, reviews:3200, tags:["jewellery","gems","traditional"],      desc:"Jaipur's gold and silver market. Famous for Kundan work, precious gems, and lac bangles.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Johari+Bazaar+Jaipur"},
+  ],
+};
+
+const TIPS = [
+  {text:"The original Locho stall near Ring Road is on another level. ₹30 a plate and you'll need three. Go before 9 AM or there's nothing left.",         user:"Rahul M.", av:"RM", city:"Surat",     loc:"Ring Road",    upvotes:342, pts:30},
+  {text:"Adajan is genuinely the best area to start in Surat. Walking distance to malls, Tapi riverfront, and BRTS is right there. PGs under ₹6k exist.",   user:"Priya S.", av:"PS", city:"Surat",     loc:"Adajan",       upvotes:287, pts:20},
+  {text:"Crawford Market at 7 AM: prices are 40% cheaper than any supermarket and produce is genuinely fresh. Make it a Saturday ritual.",                   user:"Amitabh K.",av:"AK",city:"Mumbai",   loc:"CST",          upvotes:213, pts:20},
+  {text:"Bangalore autos will ghost you. Just use Ola/Uber. Or better — the Namma Metro app is excellent and will save you real money every single day.",    user:"Sneha R.", av:"SR", city:"Bangalore", loc:"All areas",    upvotes:456, pts:30},
+  {text:"Johari Bazaar rule: always start at 50% of the first price. Shopkeepers expect the negotiation and respect you more for it.",                       user:"Vikram J.",av:"VJ", city:"Jaipur",   loc:"Johari Bazaar",upvotes:189, pts:20},
+  {text:"Delhi Metro student card is massively underrated. Also avoid 8–10 AM and 6–8 PM — it's genuinely brutal during rush hour.",                        user:"Ananya D.",av:"AD", city:"Delhi",    loc:"All areas",    upvotes:378, pts:20},
+];
+
+const CONTRIBUTORS = [
+  {name:"Rajesh Patel",    city:"Surat",     pts:8420, tier:"💎 City Legend",  av:"RP", places:167},
+  {name:"Priya Sharma",    city:"Mumbai",    pts:6180, tier:"💎 City Legend",  av:"PS", places:124},
+  {name:"Amit Verma",      city:"Delhi",     pts:4950, tier:"🥇 Local Hero",   av:"AV", places:98},
+  {name:"Neha Gupta",      city:"Bangalore", pts:4320, tier:"🥇 Local Hero",   av:"NG", places:87},
+  {name:"Suresh Kumar",    city:"Hyderabad", pts:3780, tier:"🥇 Local Hero",   av:"SK", places:76},
+  {name:"Anjali Singh",    city:"Pune",      pts:2940, tier:"🥇 Local Hero",   av:"AS", places:59},
+  {name:"Mohammed Iqbal",  city:"Chennai",   pts:2410, tier:"🥈 Navigator",    av:"MI", places:48},
+  {name:"Kavita Joshi",    city:"Jaipur",    pts:1890, tier:"🥈 Navigator",    av:"KJ", places:38},
+  {name:"Arjun Reddy",     city:"Ahmedabad", pts:1320, tier:"🥈 Navigator",    av:"AR", places:27},
+  {name:"Deepa Nair",      city:"Kochi",     pts:720,  tier:"🥉 Explorer",     av:"DN", places:14},
+];
+
+const TICKER_ITEMS = [
+  "New: Locho Stall Ring Road listed · Surat","Rajesh P. reached City Legend · 8,420 pts",
+  "New: Heritage Walk added · Surat Old City","50,000 contributors milestone reached",
+  "New: Organic Market · Vesu, Surat","Tip: Best sev usal closes by 10 AM daily",
+  "Deepa N. added 3 places in Kochi","Now live: Jaipur pink city guide",
+  "SheharBuddy covers 500+ Indian cities","New: Diamond Bourse tour added · Surat",
+];
+
+const EXPLORE_HIGHLIGHTS = [
+  {name:"Dumas Beach Evening Walk",      icon:"🌅", cat:"Nature",    area:"Dumas",          budget:"₹",   rating:4.8, reviews:3400, tags:["sunset","scenic","free"],       desc:"Golden hour at Dumas is genuinely magical. Black sand, sea breeze, and famous paranormal legends.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Dumas+Beach+Surat"},
+  {name:"Old City Heritage Walk",        icon:"🏛️", cat:"Experience",area:"Old Surat",      budget:"₹",   rating:4.7, reviews:980,  tags:["history","walking","guided"],   desc:"Wander through centuries of Mughal, Dutch, and British history in Surat's winding old lanes.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Old+Surat+Heritage"},
+  {name:"Surat Diamond Bourse Tour",     icon:"💎", cat:"Landmark",  area:"Khajod",         budget:"₹₹",  rating:4.7, reviews:1200, tags:["world's-biggest","architecture"],desc:"World's largest office building. Awe-inspiring scale — 4,700+ offices across 35 towers.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Surat+Diamond+Bourse"},
+  {name:"Weekend Night Food Market",     icon:"🌙", cat:"Food",      area:"Stadium Road",   budget:"₹",   rating:4.6, reviews:2100, tags:["night","variety","street"],     desc:"8 PM–midnight. 100+ stalls, everything from dal baati to overloaded pizzas.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Night+Food+Market+Stadium+Road+Surat"},
+  {name:"Science Centre Surat",          icon:"🔭", cat:"Education", area:"Athwa Lines",    budget:"₹",   rating:4.4, reviews:870,  tags:["interactive","family","kids"],  desc:"Hands-on science exhibits for all ages. Planetarium shows on weekends.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Science+Centre+Surat"},
+  {name:"Gopi Talav Evening",            icon:"🌊", cat:"Nature",    area:"Nanpura",        budget:"₹",   rating:4.3, reviews:760,  tags:["lake","heritage","peaceful"],   desc:"Historic 300-year-old lake. Best at 6 PM when the light hits the water.", googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Gopi+Talav+Surat"},
+];
+
+/* ════ STATE ════ */
+let city        = "Surat";
+let isLoggedIn  = false;
+let userPts     = parseInt(localStorage.getItem("sb_pts") || "125");
+let userName    = localStorage.getItem("sb_name") || "You";
+let userEmail   = localStorage.getItem("sb_email") || "";
+let checkDone   = JSON.parse(localStorage.getItem("sb_checks") || "[]");
+let selectedCat = null;
+let searchText = ""; // ADD THIS LINE for our live search!
+let pendingAction = null; // store what to do after auth
+
+/* ════ AUTH STATE RESTORE ════ */
+if(localStorage.getItem("sb_loggedin") === "true") {
+  isLoggedIn = true;
+}
+
+/* ════ BOOT ════ */
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  buildTicker();
+  buildCatGrid();
+  buildPlacesArea();
+  buildExploreTab();
+  buildTipsGrid();
+  buildBudgetTab();
+  buildReloQuiz();
+  buildCommunityFeed();
+  buildPointsCard();
+  buildLeaderboard();
+  buildChecklist();
+  buildSteps();
+  buildCompare();
+  buildProfile();
+  initReveal();
+  initNavScroll();
+  initStatCounters();
+  updateCityHeader();
+  renderNavAuth();
+
+  const mq = window.matchMedia('(max-width:640px)');
+  const adjustRelo = () => { document.getElementById('reloLayout').style.gridTemplateColumns = mq.matches ? '1fr' : '1fr 1fr'; };
+  adjustRelo(); mq.addEventListener('change', adjustRelo);
+  const bm = window.matchMedia('(max-width:900px)');
+  const adjustBudget = () => { document.getElementById('budgetLayout').style.gridTemplateColumns = bm.matches ? '1fr' : '1fr 1fr'; };
+  adjustBudget(); bm.addEventListener('change', adjustBudget);
+});
+
+/* ════ AUTH SYSTEM ════ */
+function openAuthModal(tab='signin'){
+  document.getElementById('authOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  switchAuthTab(tab||'signin');
+  lucide.createIcons();
+}
+function closeAuthModal(){
+  document.getElementById('authOverlay').classList.remove('open');
+  document.body.style.overflow='';
+  pendingAction = null;
+  hideAuthError();
+}
+document.getElementById('authOverlay').addEventListener('click', function(e){
+  if(e.target === this) closeAuthModal();
+});
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape') closeAuthModal();
+});
+
+function switchAuthTab(tab){
+  const isSignin = tab === 'signin';
+  document.getElementById('tabSignin').classList.toggle('active', isSignin);
+  document.getElementById('tabSignup').classList.toggle('active', !isSignin);
+  document.getElementById('authSigninFields').style.display = isSignin ? 'block' : 'none';
+  document.getElementById('authSignupFields').style.display = isSignin ? 'none' : 'block';
+  document.getElementById('authHeadline').textContent = isSignin ? 'Welcome back' : 'Join शहरBuddy';
+  document.getElementById('authSubline').textContent = isSignin
+    ? 'Sign in to discover, contribute, and earn Buddy Points.'
+    : 'Create your free account and start mapping India.';
+  hideAuthError();
+}
+
+function showAuthError(msg){
+  const el = document.getElementById('authError');
+  document.getElementById('authErrorText').textContent = msg;
+  el.classList.add('show');
+}
+function hideAuthError(){
+  document.getElementById('authError').classList.remove('show');
+}
+
+/* Simulated sign-in (any email + password >= 6 chars works) */
+async function handleSignIn(){
+  const email = document.getElementById('siEmail').value.trim();
+  const pass  = document.getElementById('siPassword').value;
+  if(!email){ showAuthError('Please enter your email address.'); return; }
+  if(!pass || pass.length < 6){ showAuthError('Password must be at least 6 characters.'); return; }
+
+  const btn = document.querySelector('#authSigninFields .auth-submit-btn');
+  const originalText = btn.textContent;
+  btn.textContent = 'Signing in…';
+  btn.style.opacity = '.7';
+
+  try {
+      const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: pass })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+          btn.textContent = 'Success!';
+          userPts = data.pts; // Update points from server
+          loginSuccess(data.name, data.email);
+      } else {
+          btn.textContent = originalText;
+          btn.style.opacity = '';
+          showAuthError(data.message || 'Invalid credentials.');
+      }
+  } catch (error) {
+      btn.textContent = originalText;
+      btn.style.opacity = '';
+      showAuthError('Cannot connect to server. Is it running?');
+      console.error("Login Error:", error);
+  }
+}
+
+async function handleSignUp(){
+  const first = document.getElementById('suFirst').value.trim();
+  const last  = document.getElementById('suLast').value.trim();
+  const email = document.getElementById('suEmail').value.trim();
+  const pass  = document.getElementById('suPassword').value;
+  if(!first){ showAuthError('Please enter your first name.'); return; }
+  if(!email || !email.includes('@')){ showAuthError('Please enter a valid email address.'); return; }
+  if(!pass || pass.length < 8){ showAuthError('Password must be at least 8 characters.'); return; }
+
+  const btn = document.querySelector('#authSignupFields .auth-submit-btn');
+  const originalText = btn.textContent;
+  btn.textContent = 'Creating account…';
+  btn.style.opacity = '.7';
+
+  try {
+      const response = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+              firstName: first, 
+              lastName: last, 
+              email: email, 
+              password: pass 
+          })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+          btn.textContent = 'Account Created!';
+          userPts = data.pts;
+          localStorage.setItem('sb_pts', userPts);
+          loginSuccess(data.name, data.email);
+          toast('🎉 Welcome bonus! +250 Buddy Points');
+      } else {
+          btn.textContent = originalText;
+          btn.style.opacity = '';
+          showAuthError(data.message || 'Error creating account.');
+      }
+  } catch (error) {
+      btn.textContent = originalText;
+      btn.style.opacity = '';
+      showAuthError('Cannot connect to server. Is it running?');
+      console.error("Signup Error:", error);
+  }
+}
+
+function simulateGoogleAuth(){
+  const btn = document.querySelector('.auth-google-btn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = `<svg class="google-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Redirecting to Google…`;
+  btn.style.opacity='.7';
+  setTimeout(()=>{
+    btn.innerHTML = orig;
+    btn.style.opacity = '';
+    loginSuccess('Buddy User', 'user@gmail.com');
+  }, 1200);
+}
+
+function loginSuccess(name, email){
+  isLoggedIn = true;
+  userName = name;
+  userEmail = email;
+  localStorage.setItem('sb_loggedin', 'true');
+  localStorage.setItem('sb_name', name);
+  localStorage.setItem('sb_email', email);
+  closeAuthModal();
+  renderNavAuth();
+  buildProfile();
+  buildPointsCard();
+  toast(`👋 Welcome, ${name.split(' ')[0]}!`);
+  confetti();
+
+  // execute pending action
+  if(pendingAction){
+    const a = pendingAction; pendingAction = null;
+    setTimeout(()=>{ executePendingAction(a); }, 400);
+  }
+}
+
+function logout(){
+  isLoggedIn = false;
+  localStorage.removeItem('sb_loggedin');
+  renderNavAuth();
+  buildProfile();
+  buildPointsCard();
+  toast('Signed out. See you soon!');
+}
+
+function requireAuth(action){
+  if(isLoggedIn){
+    executePendingAction(action);
+  } else {
+    pendingAction = action;
+    openAuthModal('signin');
+  }
+}
+
+function executePendingAction(action){
+  if(action === 'addModal')  openModal('addModal');
+  else if(action === 'rewards') scrollTo('rewards');
+  else if(action === 'profile') scrollTo('profile');
+  else scrollTo(action);
+}
+
+/* Update Navbar Auth Area */
+function renderNavAuth(){
+  const area = document.getElementById('navAuthArea');
+  if(isLoggedIn){
+    const initials = userName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    area.innerHTML = `
+      <div class="nav-avatar-btn" onclick="scrollTo('profile')">
+        <div class="nav-avatar">${initials}</div>
+        <span class="nav-avatar-name">${userName.split(' ')[0]}</span>
+      </div>`;
+  } else {
+    area.innerHTML = `<button class="btn-primary" onclick="openAuthModal('signin')">Sign In</button>`;
+  }
+}
+
+/* ── Password helpers ── */
+function togglePw(inputId, btn){
+  const inp = document.getElementById(inputId);
+  const isText = inp.type === 'text';
+  inp.type = isText ? 'password' : 'text';
+  btn.innerHTML = isText
+    ? '<i data-lucide="eye" width="14" height="14"></i>'
+    : '<i data-lucide="eye-off" width="14" height="14"></i>';
+  lucide.createIcons();
+}
+function checkPwStrength(input, containerId){
+  const pw = input.value;
+  const container = document.getElementById(containerId);
+  if(!pw){ container.style.opacity='0'; return; }
+  container.style.opacity='1';
+  const strong = pw.length>=8 && /[A-Z]/.test(pw) && /[0-9]/.test(pw);
+  const medium = pw.length>=6;
+  const prefix = containerId.startsWith('si') ? 'si' : 'su';
+  const b1=document.getElementById(prefix+'Bar1');
+  const b2=document.getElementById(prefix+'Bar2');
+  const b3=document.getElementById(prefix+'Bar3');
+  if(b1) b1.className='pw-bar'+(pw.length>0?' weak':'');
+  if(b2) b2.className='pw-bar'+(medium?' medium':'');
+  if(b3) b3.className='pw-bar'+(strong?' strong':'');
+}
+
+/* ════ SCROLL REVEAL ════ */
+function initReveal(){
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e,i) => { if(e.isIntersecting){ setTimeout(()=>e.target.classList.add('visible'), i*70); io.unobserve(e.target); }});
+  }, {threshold:.1});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+}
+function initNavScroll(){
+  window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+  }, {passive:true});
+}
+
+/* ── TICKER ── */
+function buildTicker(){
+  const items = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  document.getElementById('ticker').innerHTML = items.map(t=>
+    `<span class="ticker-item"><span class="ticker-dot"></span><strong>${t.split('·')[0]}</strong>${t.includes('·') ? '·'+t.split('·')[1] : ''}</span>`
+  ).join('');
+}
+
+/* ── STAT COUNTERS ── */
+function initStatCounters(){
+  document.querySelectorAll('.stat-num[data-target]').forEach(el=>{
+    const target = parseInt(el.dataset.target);
+    const io = new IntersectionObserver(([e])=>{
+      if(!e.isIntersecting) return; io.disconnect();
+      let v=0; const dur=1800; const steps=60;
+      const iv = setInterval(()=>{
+        v += target/steps;
+        if(v>=target){ el.textContent=fmtNum(target); clearInterval(iv); return; }
+        el.textContent = fmtNum(Math.floor(v));
+      }, dur/steps);
+    }, {threshold:.5});
+    io.observe(el);
+  });
+}
+function fmtNum(n){ return n>=1e6?(n/1e6).toFixed(1)+'M+':n>=1e3?(n/1e3).toFixed(0)+'K+':n+'+'; }
+
+/* ── SEARCH ── */
+function filterCities(val){
+  const dd = document.getElementById('cityDD');
+  if(!val.trim()){ dd.classList.remove('open'); return; }
+  const matches = CITY_DB.filter(c=>c.name.toLowerCase().includes(val.toLowerCase())||c.state.toLowerCase().includes(val.toLowerCase())).slice(0,8);
+  if(!matches.length){ dd.classList.remove('open'); return; }
+  dd.innerHTML = matches.map(c=>`
+    <div class="dd-item" onclick="setCity('${c.name}');document.getElementById('cityInput').value='${c.name}';closeDD()">
+      <div class="dd-icon">${c.emoji}</div>
+      <div><div class="dd-name">${c.name}</div><div class="dd-sub">${c.state} · ${c.for}</div></div>
+      <span class="dd-badge">${c.tier}</span>
+    </div>`).join('');
+  dd.classList.add('open');
+}
+function openDD(){ if(document.getElementById('cityInput').value.trim()) document.getElementById('cityDD').classList.add('open'); }
+function closeDD(){ document.getElementById('cityDD').classList.remove('open'); }
+function doSearch(){ const v=document.getElementById('cityInput').value.trim(); if(v) setCity(v); }
+
+function setCity(name){
+  city = name;
+  document.querySelectorAll('.city-pill').forEach(p=>p.classList.toggle('active', p.textContent.trim()===name));
+  document.getElementById('navCity').innerHTML = `<i data-lucide="map-pin" width="12" height="12"></i> <span>${name}</span>`;
+  lucide.createIcons();
+  updateCityHeader();
+  buildCatGrid();
+  buildPlacesArea();
+  buildExploreTab();
+  buildBudgetTab();
+  buildReloQuiz();
+  document.getElementById('reloResultArea').style.display='none';
+  scrollTo('explore');
+  toast(`Now exploring ${name}`);
+}
+
+function updateCityHeader(){
+  const c = CITY_DB.find(c=>c.name===city);
+  document.getElementById('explorerCity').textContent = c ? `${c.name}, ${c.state}` : city;
+  document.getElementById('explorerMeta').textContent = c ? `${c.for} · ${c.tier}` : 'Discover this city';
+}
+
+/* ── CATEGORIES ── */
+const CAT_DEFS = [
+  {key:"Food & Drinks",     emoji:"🍽️"},
+  {key:"Street Food",       emoji:"🍜"},
+  {key:"Cafes & Tea Stalls",emoji:"☕"},
+  {key:"PG & Housing",      emoji:"🏠"},
+  {key:"Healthcare",        emoji:"🏥"},
+  {key:"Transport",         emoji:"🚌"},
+  {key:"Shopping & Markets",emoji:"🏪"},
+  {key:"Religious Places",  emoji:"🛕"},
+  {key:"Parks & Recreation",emoji:"🌳"},
+  {key:"Banks & ATMs",      emoji:"🏦"},
+  {key:"Education",         emoji:"🎓"},
+  {key:"Salons & Wellness", emoji:"💇"},
+];
+
+function getCatCount(catKey){ return (PLACES[city]||[]).filter(p=>p.cat===catKey).length; }
+
+function buildCatGrid(){
+  selectedCat = null;
+  document.getElementById('catGrid').innerHTML = CAT_DEFS.map(c=>{
+    const count = getCatCount(c.key);
+    return `<div class="cat-card reveal" onclick="selectCat('${c.key}',this)" data-cat="${c.key}">
+      <div class="cat-emoji">${c.emoji}</div>
+      <div class="cat-name">${c.key}</div>
+      <div class="cat-count">${count > 0 ? count + ' place' + (count===1?'':'s') : 'Coming soon'}</div>
+    </div>`;
+  }).join('');
+  initReveal();
+  buildPlacesArea();
+}
+
+function selectCat(key, el){
+  document.querySelectorAll('.cat-card').forEach(c=>c.classList.remove('selected'));
+  if(selectedCat === key){ selectedCat = null; }
+  else { selectedCat = key; el.classList.add('selected'); }
+  buildPlacesArea();
+}
+
+/* ── PLACES ── */
+function buildPlacesArea(){
+  const area = document.getElementById('placesArea');
+  const all = PLACES[city] || [];
+  const filtered = selectedCat ? all.filter(p=>p.cat===selectedCat) : all;
+  const label = selectedCat ? `${CAT_DEFS.find(c=>c.key===selectedCat)?.emoji||''} ${selectedCat} in ${city}` : `All Places in ${city}`;
+
+  if(!filtered.length){
+    area.innerHTML = `<div class="places-header"><span class="places-title">${label}</span><span class="places-count">0 results</span></div>
+      <div style="text-align:center;padding:48px 24px;color:var(--dim)">
+        <div style="font-size:2.2rem;margin-bottom:10px">📍</div>
+        <div style="font-size:14px;color:var(--silver)">No places listed yet</div>
+        <div style="font-size:12px;margin-top:4px">Be the first to add one and earn 50 points!</div>
+        <button onclick="requireAuth('addModal')" style="margin-top:16px;background:var(--grad-v);border:none;color:#fff;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-display)">+ Add Place</button>
+      </div>`;
+    return;
+  }
+  area.innerHTML = `
+    <div class="places-header">
+      <span class="places-title">${label}</span>
+      <span class="places-count">${filtered.length} result${filtered.length===1?'':'s'}</span>
+    </div>
+    <div class="places-grid" id="placesGrid">
+      ${filtered.map((p,i)=>placeCardHTML(p,i)).join('')}
+    </div>`;
+  lucide.createIcons(); initReveal();
+}
+
+function placeCardHTML(p, i=0){
+  const stars = starsHTML(p.rating);
+  return `<div class="place-card reveal" style="animation-delay:${i*0.06}s" onclick='openDetail(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+    <div class="place-thumb">
+      <div class="place-thumb-gradient"></div>
+      <span style="position:relative">${p.icon}</span>
+      <span class="place-cat-chip">${p.cat}</span>
+      <span class="place-budget">${p.budget}</span>
+    </div>
+    <div class="place-body">
+      <div class="place-name">${p.name}</div>
+      <div class="place-loc"><i data-lucide="map-pin" width="10" height="10"></i>&nbsp;${p.area}</div>
+      <div class="place-tags">${p.tags.map(t=>`<span class="place-tag">${t}</span>`).join('')}</div>
+      <div class="place-desc">${p.desc.length>95?p.desc.slice(0,95)+'…':p.desc}</div>
+      <div class="place-footer">
+        <div class="place-rating">${stars} <span class="rating-val">${p.rating}</span> <span class="rating-count">(${p.reviews.toLocaleString()})</span></div>
+        <a class="map-btn" href="${p.googleMapsUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+          <i data-lucide="map-pin" width="11" height="11"></i> Map
+        </a>
+      </div>
+    </div>
+  </div>`;
+}
+
+function starsHTML(r){
+  const full=Math.floor(r), empty=5-full;
+  return `<span class="stars-fill">${'★'.repeat(full)}</span><span class="stars-empty">${'★'.repeat(empty)}</span>`;
+}
+
+function buildExploreTab(){
+  document.getElementById('exploreGrid').innerHTML = EXPLORE_HIGHLIGHTS.map((p,i)=>placeCardHTML(p,i)).join('');
+  lucide.createIcons(); initReveal();
+}
+
+function buildTipsGrid(){
+  document.getElementById('tipsGrid').innerHTML = TIPS.map((t,i)=>`
+    <div class="tip-card reveal" style="animation-delay:${i*0.09}s">
+      <div class="tip-quote">"${t.text}"</div>
+      <div class="tip-footer">
+        <div class="tip-avatar">${t.av}</div>
+        <div><div class="tip-name">${t.user}</div><div class="tip-loc">📍 ${t.loc}, ${t.city}</div></div>
+        <button class="tip-upvotes" onclick="this.style.color='var(--violet-l)';toast('Upvoted!')">
+          <i data-lucide="thumbs-up" width="12" height="12"></i> ${t.upvotes}
+        </button>
+        <span class="tip-pts">+${t.pts} pts</span>
+      </div>
+    </div>`).join('');
+  lucide.createIcons(); initReveal();
+}
+
+/* ── BUDGET ── */
+function buildBudgetTab(){
+  const c = CITY_DB.find(x=>x.name===city);
+  document.getElementById('budgetLayout').innerHTML = `
+    <div class="budget-card">
+      <div class="budget-card-title"><i data-lucide="sliders" width="14" height="14"></i> Monthly Estimator</div>
+      <div class="slider-group"><div class="slider-label"><span class="slider-name">🏠 Rent</span><span class="slider-val" id="sv-rent">₹10,000</span></div><input type="range" min="4000" max="50000" value="10000" step="500" id="sl-rent" oninput="updateBudget()"/></div>
+      <div class="slider-group"><div class="slider-label"><span class="slider-name">🛒 Groceries</span><span class="slider-val" id="sv-groc">₹4,000</span></div><input type="range" min="1500" max="14000" value="4000" step="500" id="sl-groc" oninput="updateBudget()"/></div>
+      <div class="slider-group"><div class="slider-label"><span class="slider-name">🚌 Transport</span><span class="slider-val" id="sv-trans">₹1,500</span></div><input type="range" min="500" max="8000" value="1500" step="250" id="sl-trans" oninput="updateBudget()"/></div>
+      <div class="slider-group"><div class="slider-label"><span class="slider-name">🍽️ Eating out</span><span class="slider-val" id="sv-food">₹3,000</span></div><input type="range" min="1000" max="12000" value="3000" step="500" id="sl-food" oninput="updateBudget()"/></div>
+      <div class="slider-group"><div class="slider-label"><span class="slider-name">💡 Utilities</span><span class="slider-val" id="sv-util">₹2,000</span></div><input type="range" min="500" max="5000" value="2000" step="250" id="sl-util" oninput="updateBudget()"/></div>
+      <div class="budget-total"><div class="budget-total-label">Estimated Monthly</div><div class="budget-total-num" id="budget-total">₹20,500</div></div>
+    </div>
+    <div>
+      <div class="budget-card" style="margin-bottom:14px">
+        <div class="budget-card-title"><i data-lucide="pie-chart" width="14" height="14"></i> Expense Split</div>
+        <div class="pie-container">
+          <svg id="pieChart" width="120" height="120" viewBox="0 0 120 120"></svg>
+          <div class="pie-legend" id="pieLegend"></div>
+        </div>
+      </div>
+      <div class="budget-card">
+        <div class="budget-card-title"><i data-lucide="home" width="14" height="14"></i> Avg. Rent — ${c?.name||city}</div>
+        ${c ? [['PG / Hostel',c.rent.pg,'🏠'],['1 BHK Flat',c.rent.bhk1,'🏡'],['2 BHK Flat',c.rent.bhk2,'🏘️']].map(([type,val,ico])=>`
+        <div class="rent-row"><span class="rent-type">${ico} ${type}</span><span class="rent-val">${val}/mo</span></div>`).join('') : '<p style="color:var(--dim);font-size:13px">Select a city above</p>'}
+      </div>
+    </div>`;
+  lucide.createIcons();
+  drawPie();
+}
+
+function updateBudget(){
+  const r=+document.getElementById('sl-rent').value,g=+document.getElementById('sl-groc').value,
+        t=+document.getElementById('sl-trans').value,f=+document.getElementById('sl-food').value,
+        u=+document.getElementById('sl-util').value;
+  document.getElementById('sv-rent').textContent='₹'+r.toLocaleString();
+  document.getElementById('sv-groc').textContent='₹'+g.toLocaleString();
+  document.getElementById('sv-trans').textContent='₹'+t.toLocaleString();
+  document.getElementById('sv-food').textContent='₹'+f.toLocaleString();
+  document.getElementById('sv-util').textContent='₹'+u.toLocaleString();
+  document.getElementById('budget-total').textContent='₹'+(r+g+t+f+u).toLocaleString();
+  drawPie(r,g,t,f,u);
+}
+
+function drawPie(r=10000,g=4000,t=1500,f=3000,u=2000){
+  const data=[
+    {label:'Rent',     val:r, color:'#4f46e5'},
+    {label:'Groceries',val:g, color:'#06b6d4'},
+    {label:'Transport',val:t, color:'#8b5cf6'},
+    {label:'Food',     val:f, color:'#eab308'},
+    {label:'Utilities',val:u, color:'#64748b'},
+  ];
+  const total=data.reduce((s,d)=>s+d.val,0);
+  const cx=60,cy=60,r2=52; let ang=-Math.PI/2;
+  const paths=data.map(d=>{
+    const a=(d.val/total)*2*Math.PI;
+    const x1=cx+r2*Math.cos(ang),y1=cy+r2*Math.sin(ang);
+    const x2=cx+r2*Math.cos(ang+a),y2=cy+r2*Math.sin(ang+a);
+    const lg=a>Math.PI?1:0;
+    const path=`M${cx},${cy}L${x1},${y1}A${r2},${r2},0,${lg},1,${x2},${y2}Z`;
+    ang+=a;
+    return `<path d="${path}" fill="${d.color}" opacity=".9"/>`;
+  }).join('');
+  if(document.getElementById('pieChart')) document.getElementById('pieChart').innerHTML=paths;
+  if(document.getElementById('pieLegend')) document.getElementById('pieLegend').innerHTML=data.map(d=>`
+    <div class="pie-legend-row"><span class="pie-dot" style="background:${d.color}"></span><span class="pie-key">${d.label}</span><span class="pie-amount">₹${d.val.toLocaleString()}</span></div>`).join('');
+}
+
+/* ── RELOCATION QUIZ ── */
+let reloState={budget:30000,commute:'',type:''};
+function buildReloQuiz(){
+  const c=CITY_DB.find(x=>x.name===city);
+  document.getElementById('reloQuiz').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <div style="width:36px;height:36px;background:var(--grad-v);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem">🚀</div>
+      <div><div style="font-size:14px;font-weight:700;color:var(--white)">Moving to ${city}?</div><div style="font-size:12px;color:var(--dim)">Answer 3 questions for a personal guide</div></div>
+    </div>
+    <div class="relo-question">1. What's your monthly budget?</div>
+    <div style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:5px"><span>₹10k</span><span style="font-weight:700;color:var(--white)" id="reloBudgetLabel">₹30,000</span><span>₹1L</span></div>
+      <input type="range" min="10000" max="100000" value="30000" step="5000" oninput="reloState.budget=+this.value;document.getElementById('reloBudgetLabel').textContent='₹'+parseInt(this.value).toLocaleString()"/>
+    </div>
+    <div class="relo-question">2. How will you commute?</div>
+    <div class="relo-options" id="reloCommute">
+      ${['🚶 Walk','🛺 Auto','🚌 Bus','🏍️ Bike','💻 WFH'].map(o=>`<button class="relo-opt" onclick="reloState.commute='${o}';this.closest('.relo-options').querySelectorAll('.relo-opt').forEach(x=>x.classList.remove('active'));this.classList.add('active')">${o}</button>`).join('')}
+    </div>
+    <div class="relo-question">3. What's your situation?</div>
+    <div class="relo-options" id="reloType">
+      ${['👨‍👩‍👧 Family','🧑 Bachelor','🎓 Student','👴 Senior'].map(o=>`<button class="relo-opt" onclick="reloState.type='${o}';this.closest('.relo-options').querySelectorAll('.relo-opt').forEach(x=>x.classList.remove('active'));this.classList.add('active')">${o}</button>`).join('')}
+    </div>
+    <button onclick="showReloResult()" style="width:100%;background:var(--grad-v);border:none;color:#fff;padding:11px;border-radius:8px;font-weight:700;font-size:13.5px;cursor:pointer;margin-top:6px;font-family:var(--font-display)">Show My Personalised Guide →</button>`;
+}
+
+function showReloResult(){
+  const c = CITY_DB.find(x=>x.name===city);
+  const areas = c ? c.areas.slice(0,4) : ['Central Area','Main Zone'];
+  const budget = reloState.budget;
+  const rentLabel = budget<20000?'PG / Hostel':budget<40000?'1 BHK':budget<70000?'2 BHK':'Premium Housing';
+  const rentRange = c ? (budget<20000?c.rent.pg:budget<40000?c.rent.bhk1:c.rent.bhk2) : '₹6k–15k';
+  const ra = document.getElementById('reloResultArea');
+  ra.style.display='block';
+  ra.innerHTML=`
+    <div class="relo-result">
+      <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:14px">Your ${city} Guide</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Recommended Areas</div>
+        <div>${areas.map(a=>`<span class="relo-area-chip">📍 ${a}</span>`).join('')}</div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Best Housing Option</div>
+        <div class="pref-row" style="margin-bottom:0"><span class="pref-key">🏠 ${rentLabel}</span><span class="pref-val">${rentRange}/mo</span></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">First Week Checklist</div>
+        ${['Find nearest grocery store','Note the hospital closest to your PG','Discover a chai stall you like','Learn the main bus/auto routes','Introduce yourself to one neighbour'].map(t=>`
+          <div style="display:flex;gap:7px;font-size:12.5px;color:var(--dim);margin-bottom:5px"><span style="color:var(--violet-l);font-size:12px">✓</span>${t}</div>`).join('')}
+      </div>
+      <div class="relo-tip">"${TIPS[0].text}" — ${TIPS[0].user}</div>
+    </div>`;
+}
+
+/* ── COMMUNITY ── */
+function buildCommunityFeed(){
+  const recent=[
+    {name:"Chai Sutta Bar",    icon:"☕",cat:"Cafes & Tea Stalls",area:"Adajan",    budget:"₹",   rating:4.7,reviews:1800,tags:["matka-chai","24hrs","youth"],    desc:"Chai in clay matkas, open 24x7. The go-to late-night spot for young Surat.",         googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Chai+Sutta+Bar+Adajan+Surat"},
+    {name:"Organic Market Vesu",icon:"🌱",cat:"Shopping & Markets",area:"Vesu",     budget:"₹₹",  rating:4.8,reviews:560, tags:["organic","fresh","weekend-only"],desc:"Saturday-only farmers market. 40+ vendors, fresh Gujarat produce, very popular.",     googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Organic+Farmers+Market+Vesu+Surat"},
+    {name:"Keval Sev Usal",    icon:"🫕",cat:"Street Food",      area:"Citylight",  budget:"₹",   rating:4.9,reviews:3200,tags:["sev-usal","breakfast","1978"],    desc:"Family-run since 1978. Best sev usal in Surat — arrives 7 AM, finishes by 10.",    googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=Keval+Sev+Usal+Surat"},
+    {name:"VR Mall Food Court", icon:"🏬",cat:"Shopping & Markets",area:"Dumas Rd", budget:"₹₹₹",rating:4.4,reviews:3187,tags:["food-court","mall","ac"],          desc:"Best air-conditioned food court in Surat. 25+ brands. Goes loud on weekends.",      googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=VR+Mall+Surat"},
+    {name:"BRTS Udhna Darwaja",icon:"🚌",cat:"Transport",        area:"Udhna",      budget:"₹",   rating:4.0,reviews:430, tags:["brts","bus","cheap"],             desc:"Main BRTS junction. Cheapest way to get around Surat. Connects all major areas.",   googleMapsUrl:"https://www.google.com/maps/search/?api=1&query=BRTS+Udhna+Darwaja+Surat"},
+  ];
+  document.getElementById('communityFeed').innerHTML = recent.map((p,i)=>`
+    <div class="feed-card" style="animation:fadeUp .5s ${i*0.09}s ease both" onclick='openDetail(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+      <div class="feed-thumb">${p.icon}</div>
+      <div class="feed-body">
+        <div class="feed-name">${p.name}</div>
+        <div class="feed-loc"><i data-lucide="map-pin" width="10" height="10"></i>&nbsp;${p.area}</div>
+        <div class="feed-tags">${p.tags.map(t=>`<span class="place-tag">${t}</span>`).join('')}</div>
+        <div class="feed-footer">
+          <div class="place-rating">${starsHTML(p.rating)} <span class="rating-val">${p.rating}</span></div>
+          <a class="map-btn" href="${p.googleMapsUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;padding:4px 9px"><i data-lucide="map-pin" width="10" height="10"></i> Map</a>
+        </div>
+      </div>
+    </div>`).join('');
+  lucide.createIcons();
+}
+
+/* ── POINTS CARD ── */
+function buildPointsCard(){
+  const pct = Math.min(userPts/5000,1);
+  const offset = (1-pct)*283;
+  const displayName = isLoggedIn ? userName : 'Guest';
+  document.getElementById('pointsCard').innerHTML=`
+    <div class="pts-user-row">
+      <div class="pts-avatar">${displayName[0]?.toUpperCase()||'G'}</div>
+      <div><div class="pts-name">${displayName}</div><div class="pts-tier">${getTier(userPts)}</div></div>
+    </div>
+    <div class="pts-ring-wrap">
+      <svg class="pts-ring" width="90" height="90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="var(--bg4)" stroke-width="7"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="url(#ptg)" stroke-width="7"
+          stroke-dasharray="283" stroke-dashoffset="${offset}" stroke-linecap="round"
+          style="--ring-offset:${offset};animation:ringFill 1.4s var(--ease) both"/>
+        <defs><linearGradient id="ptg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#4f46e5"/><stop offset="100%" stop-color="#06b6d4"/>
+        </linearGradient></defs>
+      </svg>
+      <div class="pts-total">${userPts.toLocaleString()}</div>
+      <div class="pts-unit">Buddy Points</div>
+    </div>
+    <div class="tier-list">
+      ${[['🥉','Explorer','0–499'],['🥈','Navigator','500–1,499'],['🥇','Local Hero','1,500–4,999'],['💎','City Legend','5,000+']].map(([ico,name,range])=>`
+        <div class="tier-row ${getTierName(userPts)===name?'current':''}">
+          <span class="tier-icon">${ico}</span>
+          <div><div class="tier-name-text">${name}</div><div class="tier-range">${range} pts</div></div>
+        </div>`).join('')}
+    </div>
+    <div class="earn-list">
+      ${[['Add a place','50'],['Place verified','100'],['Write a tip','20'],['Daily check-in','5'],['Refer a friend','200']].map(([a,p])=>`
+        <div class="earn-item"><span class="earn-action">${a}</span><span class="earn-pts-val">+${p}</span></div>`).join('')}
+    </div>`;
+}
+
+function getTier(pts){ return pts>=5000?'💎 City Legend':pts>=1500?'🥇 Local Hero':pts>=500?'🥈 Navigator':'🥉 Explorer'; }
+function getTierName(pts){ return pts>=5000?'City Legend':pts>=1500?'Local Hero':pts>=500?'Navigator':'Explorer'; }
+
+/* ── LEADERBOARD ── */
+function buildLeaderboard(){
+  const medals=['👑','🥈','🥉'];
+  document.getElementById('lbTable').innerHTML=`
+    <thead><tr><th>Rank</th><th>Contributor</th><th>City</th><th>Points</th><th>Tier</th></tr></thead>
+    <tbody>${CONTRIBUTORS.map((c,i)=>`
+      <tr>
+        <td class="lb-rank ${i===0?'lb-r1':i===1?'lb-r2':i===2?'lb-r3':''}">${i<3?medals[i]:i+1}</td>
+        <td><div class="lb-user"><div class="lb-avatar">${c.av}</div><span class="lb-uname">${c.name}</span></div></td>
+        <td><span class="lb-city-tag">📍 ${c.city}</span></td>
+        <td class="lb-pts-val">${c.pts.toLocaleString()}</td>
+        <td class="lb-tier">${c.tier}</td>
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+/* ── CHECKLIST ── */
+const CHECKS=[
+  {id:'grocery',label:'Find nearest grocery store',pts:5},
+  {id:'hospital',label:'Register at a local hospital',pts:5},
+  {id:'chai',label:'Discover your chai stall',pts:5},
+  {id:'area',label:'Explore one new neighbourhood',pts:10},
+  {id:'place',label:'Add your first place',pts:50},
+  {id:'tip',label:'Write your first local tip',pts:20},
+];
+function buildChecklist(){
+  document.getElementById('checklistCard').innerHTML=`
+    <div class="checklist-title"><i data-lucide="clipboard-list" width="15" height="15"></i> Newcomer Checklist — First 30 Days</div>
+    ${CHECKS.map(c=>`
+      <div class="check-item ${checkDone.includes(c.id)?'done':''}" onclick="toggleCheck('${c.id}',${c.pts})">
+        <div class="check-box">${checkDone.includes(c.id)?'<i data-lucide="check" width="11" height="11" style="color:#fff"></i>':''}</div>
+        <span class="check-label">${c.label}</span>
+        <span class="check-pts-tag">+${c.pts}</span>
+      </div>`).join('')}`;
+  lucide.createIcons();
+}
+function toggleCheck(id,pts){
+  if(checkDone.includes(id)) return;
+  checkDone.push(id); localStorage.setItem('sb_checks',JSON.stringify(checkDone));
+  addPts(pts); buildChecklist();
+  toast(`✓ Done · +${pts} points earned`);
+}
+
+/* ── HOW IT WORKS ── */
+function buildSteps(){
+  const steps=[
+    {n:'1',title:'Pick your city',desc:'Search or tap any of India\'s 500+ cities'},
+    {n:'2',title:'Set preferences',desc:'Budget, commute mode, lifestyle type'},
+    {n:'3',title:'Discover essentials',desc:'Hospitals, markets, cafes, and more'},
+    {n:'4',title:'Contribute & earn',desc:'Add local places and earn Buddy Points'},
+    {n:'5',title:'Become a legend',desc:'Climb tiers to City Legend status'},
+  ];
+  document.getElementById('stepsRow').innerHTML=steps.map((s,i)=>`
+    <div class="step-item ${i<2?'step-active':''}">
+      <div class="step-num">${s.n}</div>
+      <div class="step-title">${s.title}</div>
+      <div class="step-desc">${s.desc}</div>
+    </div>`).join('');
+}
+
+/* ── COMPARE ── */
+function buildCompare(){
+  const c1=CITY_DB.find(c=>c.name==='Surat');
+  const c2=CITY_DB.find(c=>c.name==='Pune');
+  document.getElementById('compareGrid').innerHTML=`
+    <div class="compare-col">
+      <div class="compare-city-name">${c1.emoji} ${c1.name}</div>
+      ${compRow('State',c1.state)} ${compRow('Known for',c1.for)} ${compRow('PG Rent',c1.rent.pg)} ${compRow('1BHK Rent',c1.rent.bhk1)} ${compRow('Transport',c1.transport.slice(0,2).join(', '))}
+    </div>
+    <div class="compare-vs">VS</div>
+    <div class="compare-col">
+      <div class="compare-city-name">${c2.emoji} ${c2.name}</div>
+      ${compRow('State',c2.state)} ${compRow('Known for',c2.for)} ${compRow('PG Rent',c2.rent.pg)} ${compRow('1BHK Rent',c2.rent.bhk1)} ${compRow('Transport',c2.transport.slice(0,2).join(', '))}
+    </div>`;
+}
+function compRow(key,val){ return `<div class="compare-row"><span class="compare-key">${key}</span><span class="compare-val">${val}</span></div>`; }
+
+/* ════════════════════════════════════════════
+   PROFILE — SWIGGY-STYLE DASHBOARD REDESIGN
+════════════════════════════════════════════ */
+function buildProfile(){
+  const area = document.getElementById('profileArea');
+
+  if(!isLoggedIn){
+    area.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:64px 24px;border:1px solid var(--border);border-radius:14px;background:var(--bg2)">
+        <div style="font-size:2.5rem;margin-bottom:14px">👤</div>
+        <div style="font-size:16px;font-weight:700;color:var(--white);margin-bottom:6px">You're not signed in</div>
+        <div style="font-size:13.5px;color:var(--dim);margin-bottom:24px;max-width:300px;margin-left:auto;margin-right:auto">Sign in to track your contributions, Buddy Points, and saved places.</div>
+        <button onclick="openAuthModal('signin')" style="background:var(--grad-v);border:none;color:#fff;padding:11px 28px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-display);box-shadow:0 6px 20px rgba(79,70,229,.35)">Sign In to शहरBuddy</button>
+        <div style="margin-top:12px;font-size:12px;color:var(--dim)">New here? <span style="color:var(--violet-l);cursor:pointer;font-weight:600" onclick="openAuthModal('signup')">Create a free account →</span></div>
+      </div>`;
+    return;
+  }
+
+  const initials = userName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const contribution_count = 3;
+  const savedCount = 7;
+
+  const menuSections = [
+    {
+      items: [
+        {
+          icon: 'heart',
+          colorClass: 'violet',
+          title: 'My Account',
+          sub: 'Favourites, Saved places, Settings',
+          badge: savedCount + ' saved',
+          action: ()=>toast('Opening My Account…')
+        },
+        {
+          icon: 'map-pin',
+          colorClass: 'cyan',
+          title: 'Addresses',
+          sub: 'Share, Edit & Add New City Addresses',
+          action: ()=>toast('Opening Addresses…')
+        },
+      ]
+    },
+    {
+      items: [
+        {
+          icon: 'trophy',
+          colorClass: 'gold',
+          title: 'Payments & Rewards',
+          sub: 'Buddy Point redemptions & Payment Modes',
+          badge: userPts.toLocaleString() + ' pts',
+          action: ()=>{ scrollTo('rewards'); toast('Opening Rewards…'); }
+        },
+        {
+          icon: 'life-buoy',
+          colorClass: 'slate',
+          title: 'Help & Support',
+          sub: 'FAQ & Customer Support',
+          action: ()=>toast('Opening Help & Support…')
+        },
+      ]
+    },
+    {
+      items: [
+        {
+          icon: 'settings',
+          colorClass: 'slate',
+          title: 'Settings',
+          sub: 'Notifications, Privacy & App preferences',
+          action: ()=>toast('Opening Settings…')
+        },
+        {
+          icon: 'share-2',
+          colorClass: 'violet',
+          title: 'Refer & Earn',
+          sub: 'Invite friends · Earn +200 pts per referral',
+          action: ()=>{ toast('Referral link copied! 🔗'); addPts(10); }
+        },
+      ]
+    },
+    {
+      items: [
+        {
+          icon: 'log-out',
+          colorClass: 'slate',
+          title: 'Sign Out',
+          sub: 'You\'ll be logged out of all devices',
+          action: ()=>logout(),
+          isLogout: true
+        },
+      ]
+    }
+  ];
+
+  const menuHTML = menuSections.map((section, si) => `
+    <div class="profile-menu-section">
+      ${section.items.map(item => `
+        <div class="profile-menu-row ${item.isLogout?'pmr-logout':''}" onclick="(${item.action.toString()})()">
+          <div class="pmr-icon-wrap ${item.colorClass}">
+            <i data-lucide="${item.icon}" width="16" height="16"></i>
+          </div>
+          <div class="pmr-text">
+            <div class="pmr-title">${item.title}</div>
+            <div class="pmr-sub">${item.sub}</div>
+          </div>
+          ${item.badge ? `<span class="pmr-badge">${item.badge}</span>` : ''}
+          <div class="pmr-chevron"><i data-lucide="chevron-right" width="15" height="15"></i></div>
+        </div>
+        ${section.items.indexOf(item) < section.items.length-1 ? '<div class="profile-menu-divider"></div>' : ''}
+      `).join('')}
+    </div>
+  `).join('');
+
+  area.innerHTML = `
+    <!-- LEFT: Identity Card -->
+    <div class="profile-identity-card">
+      <div class="profile-id-hero">
+        <div class="profile-ava">${initials}</div>
+        <div class="profile-name">${userName}</div>
+        <div class="profile-city-tag"><i data-lucide="map-pin" width="11" height="11"></i> ${city}</div>
+        <div class="profile-pts-pill">
+          <div>
+            <div class="profile-pts-num">${userPts.toLocaleString()}</div>
+            <div class="profile-pts-label">Buddy Points</div>
+          </div>
+        </div>
+        <div class="profile-tier-badge">${getTier(userPts)}</div>
+      </div>
+
+      <div class="profile-id-body">
+        <!-- Mini stats -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);margin-bottom:4px">
+          ${[['Places',contribution_count],['Saved',savedCount],['Tips','2']].map(([l,v])=>`
+            <div style="text-align:center;padding:14px 0;border-right:1px solid var(--border)">
+              <div style="font-size:1.1rem;font-weight:800;color:var(--white)">${v}</div>
+              <div style="font-size:10.5px;color:var(--dim);margin-top:1px">${l}</div>
+            </div>`).join('')}
+        </div>
+
+        <!-- Edit button -->
+        <button class="profile-edit-btn" onclick="editProfile()">
+          <i data-lucide="pencil" width="13" height="13"></i> Edit Profile
+        </button>
+
+        <!-- Badges -->
+        <div class="badge-strip">
+          ${[['🗺️','Explorer'],['📍','Mapper'],['💬','Tipper'],['⭐','Reviewer']].map(([e,n])=>`
+            <div class="badge-chip"><span>${e}</span><span>${n}</span></div>`).join('')}
+        </div>
+
+        <!-- Tier progress -->
+        <div style="padding:14px 16px 16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11.5px">
+            <span style="color:var(--dim)">Progress to ${userPts>=5000?'Legend Max':userPts>=1500?'City Legend':userPts>=500?'Local Hero':'Navigator'}</span>
+            <span style="color:var(--white);font-weight:600">${Math.min(100,Math.round((userPts/(userPts>=1500?5000:userPts>=500?1500:500))*100))}%</span>
+          </div>
+          <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${Math.min(100,Math.round((userPts/(userPts>=1500?5000:userPts>=500?1500:500))*100))}%;background:var(--grad-v);border-radius:2px;transition:width 1s var(--ease)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Menu Rows -->
+    <div>
+      <!-- Quick actions -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <button onclick="requireAuth('addModal')" style="display:flex;align-items:center;gap:9px;background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.3);color:var(--violet-l);padding:13px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-display);transition:all .2s" onmouseover="this.style.background='rgba(79,70,229,.18)'" onmouseout="this.style.background='rgba(79,70,229,.1)'">
+          <i data-lucide="plus-circle" width="16" height="16"></i> Add a Place
+        </button>
+        <button onclick="scrollTo('rewards')" style="display:flex;align-items:center;gap:9px;background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);color:var(--gold);padding:13px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-display);transition:all .2s" onmouseover="this.style.background='rgba(234,179,8,.15)'" onmouseout="this.style.background='rgba(234,179,8,.08)'">
+          <i data-lucide="award" width="16" height="16"></i> View Rewards
+        </button>
+      </div>
+
+      <!-- Menu card -->
+      <div class="profile-menu-card">
+        ${menuHTML}
+      </div>
+
+      <!-- Recent activity -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-top:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:14px;display:flex;align-items:center;gap:7px">
+          <i data-lucide="activity" width="14" height="14" style="color:var(--violet-l)"></i> Recent Activity
+        </div>
+        ${[
+          {icon:'map-pin',text:'Added Organic Market Vesu',pts:'+50',time:'2 days ago',color:'var(--violet-l)'},
+          {icon:'thumbs-up',text:'Upvoted 4 community tips',pts:'+8',time:'4 days ago',color:'var(--cyan)'},
+          {icon:'star',text:'Reviewed Dumas Beach',pts:'+20',time:'1 week ago',color:'var(--gold)'},
+        ].map(a=>`
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border)">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(79,70,229,.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:${a.color};flex-shrink:0">
+              <i data-lucide="${a.icon}" width="13" height="13"></i>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:12.5px;color:var(--silver);font-weight:500">${a.text}</div>
+              <div style="font-size:11px;color:var(--dim);margin-top:1px">${a.time}</div>
+            </div>
+            <span style="font-size:11.5px;font-weight:700;color:var(--gold);background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.2);padding:2px 8px;border-radius:4px">${a.pts}</span>
+          </div>`).join('')}
+        <div style="border:none;padding-top:8px;padding-bottom:2px;text-align:center">
+          <span style="font-size:12px;color:var(--violet-l);cursor:pointer;font-weight:600" onclick="scrollTo('rewards')">View full history →</span>
+        </div>
+      </div>
+    </div>`;
+
+  lucide.createIcons();
+}
+
+function editProfile(){
+  const n=prompt('Enter your name:', userName);
+  if(n&&n.trim()){ userName=n.trim(); localStorage.setItem('sb_name',userName); buildProfile(); buildPointsCard(); renderNavAuth(); toast('Profile updated · +25 pts'); addPts(25); }
+}
+
+/* ── PLACE DETAIL MODAL ── */
+function openDetail(p){
+  if(typeof p==='string') p=JSON.parse(p);
+  document.getElementById('detailTitle').textContent=p.name;
+  document.getElementById('detailBody').innerHTML=`
+    <div class="detail-hero">
+      ${p.icon}
+      <span class="detail-cat-chip">${p.cat}</span>
+      <span class="detail-budget-chip">${p.budget||'₹'}</span>
+    </div>
+    <div class="detail-name">${p.name}</div>
+    <div class="detail-stars">${starsHTML(p.rating||4.5)} <span style="color:var(--silver);font-weight:600;font-size:13px">${p.rating||4.5}</span> <span style="color:var(--dim);font-size:12px">(${(p.reviews||100).toLocaleString()} reviews)</span></div>
+    <div class="detail-meta-grid">
+      <span class="detail-meta-chip"><i data-lucide="map-pin" width="12" height="12"></i> ${p.area||'City'}</span>
+      <span class="detail-meta-chip"><i data-lucide="clock" width="12" height="12"></i> <span style="color:var(--cyan)">Open Now</span></span>
+      ${(p.tags||[]).slice(0,3).map(t=>`<span class="detail-meta-chip">#${t}</span>`).join('')}
+    </div>
+    <div class="detail-desc">${p.desc||''}</div>
+    <div class="detail-actions-row">
+      <button class="detail-action-btn d-upvote" onclick="this.style.background='rgba(79,70,229,.25)';addPts(2);toast('Upvoted!')"><i data-lucide="thumbs-up" width="13" height="13"></i> Upvote</button>
+      <a class="detail-action-btn d-map" href="${p.googleMapsUrl||'#'}" target="_blank" rel="noopener"><i data-lucide="map" width="13" height="13"></i> Open in Maps</a>
+      <button class="detail-action-btn d-save" onclick="toast('Saved to bookmarks')"><i data-lucide="bookmark" width="13" height="13"></i> Save</button>
+      <button class="detail-action-btn d-share" onclick="toast('Link copied!')"><i data-lucide="share-2" width="13" height="13"></i> Share</button>
+    </div>`;
+  lucide.createIcons();
+  openModal('detailModal');
+}
+
+/* ── MODALS ── */
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  const sheet=document.getElementById(id==='addModal'?'addModalSheet':id==='detailModal'?'detailSheet':id+'Sheet');
+  if(sheet) setTimeout(()=>sheet.classList.add('open'),10);
+  document.body.style.overflow='hidden';
+}
+function closeModal(id){
+  const sheet=document.getElementById(id==='addModal'?'addModalSheet':id==='detailModal'?'detailSheet':id+'Sheet');
+  if(sheet) sheet.classList.remove('open');
+  setTimeout(()=>{ document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; },300);
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') { document.querySelectorAll('.modal-overlay.open').forEach(m=>closeModal(m.id)); closeAuthModal(); }});
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',function(e){ if(e.target===this) closeModal(this.id); }));
+
+/* ── FORM ── */
+async function submitPlace(e)
+{
+  e.preventDefault(); 
+  
+  const placeName = document.getElementById('addPlaceName').value;
+  const placeCat = document.getElementById('addPlaceCat').value;
+  const placeCity = document.getElementById('addPlaceCity').value;
+  const placeArea = document.getElementById('addPlaceArea').value;
+  const placePhone = document.getElementById('addPlacePhone').value;
+  const placeDesc = document.getElementById('addPlaceDesc').value;
+  
+  const budgetBtn = document.querySelector('#bToggle .budget-btn.active');
+  const placeBudget = budgetBtn ? budgetBtn.textContent : '₹ Budget';
+  
+  const btn = e.target.querySelector('.form-btn');
+  const originalText = btn.textContent;
+  btn.textContent = 'Saving to Server...';
+  
+  try {
+      const response = await fetch('/api/places', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+              name: placeName, 
+              cat: placeCat, 
+              city: placeCity,
+              area: placeArea,
+              phone: placePhone,
+              desc: placeDesc,
+              budget: placeBudget,
+              author: userName, // The name to show on the card
+              email: userEmail  // 🔑 The secret key to get your points!
+          })
+      });
+
+      const data = await response.json();
+
+      if(data.success) {
+          btn.textContent = originalText;
+          closeModal('addModal');
+          toast('📍 Place added! (+50 Pts)'); 
+          
+          // 🏆 GAMIFICATION MAGIC: Update the UI instantly!
+          if (data.newPts) {
+              userPts = data.newPts;
+              localStorage.setItem('sb_pts', userPts);
+              buildPointsCard(); // Redraws the circle chart
+              buildProfile();    // Redraws your dashboard
+          }
+          
+          confetti();
+          e.target.reset(); 
+      }
+  } catch (error) {
+      btn.textContent = originalText;
+      toast('Error saving to server!');
+      console.error(error);
+  }
+
+}
+function selBudget(btn){ document.querySelectorAll('#bToggle .budget-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+
+/* ── DRAWER ── */
+function openDrawer(){ document.getElementById('drawer').classList.add('open'); document.getElementById('dOverlay').classList.add('open'); }
+function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('dOverlay').classList.remove('open'); }
+
+/* ── HELPERS ── */
+function scrollTo(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
+function setActiveNav(btn){ document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function addPts(n){ userPts+=n; localStorage.setItem('sb_pts',userPts); buildPointsCard(); buildProfile(); }
+
+function switchTab(btn,id){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='budget-tab') buildBudgetTab();
+  if(id==='relo-tab'){ buildReloQuiz(); document.getElementById('reloResultArea').style.display='none'; }
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML=msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function confetti(){
+  const colors=['#4f46e5','#06b6d4','#818cf8','#eab308','#8b5cf6'];
+  for(let i=0;i<50;i++){
+    const c=document.createElement('div');
+    c.className='confetti-piece';
+    c.style.cssText=`left:${Math.random()*100}vw;top:-8px;width:${5+Math.random()*7}px;height:${5+Math.random()*7}px;background:${colors[Math.floor(Math.random()*colors.length)]};--dur:${1.8+Math.random()*1.8}s;animation-delay:${Math.random()*0.4}s;border-radius:${Math.random()>0.5?'50%':'2px'}`;
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),3800);
+  }
+}
+
+// 🌍 PHASE 5: THE DATA MERGE (Connects Backend to your beautiful Frontend)
+async function loadPlaces() {
+    try {
+        // 1. Ask the server for the saved places
+        const response = await fetch('/api/places');
+        const data = await response.json();
+
+        if (data.success && data.places.length > 0) {
+            
+            // 2. Loop through every place the server sends back
+            data.places.forEach(serverPlace => {
+                
+                // If the city doesn't exist in your DB yet, create it!
+                if (!PLACES[serverPlace.city]) {
+                    PLACES[serverPlace.city] = [];
+                }
+                
+                // 3. Format the server data to match your exact UI structure
+                const newPlace = {
+                    name: serverPlace.name,
+                    cat: serverPlace.cat,
+                    icon: "📍", 
+                    area: serverPlace.area || "City Center",
+                    budget: serverPlace.budget || "₹",
+                    rating: 5.0, // Give them 5 stars automatically!
+                    reviews: 1, 
+                    tags: ["New", "Live Data"],
+                    desc: serverPlace.desc || "Added by " + serverPlace.author,
+                    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(serverPlace.name + " " + serverPlace.city)
+                };
+                
+                // 4. Inject it at the very top of your city's list!
+                PLACES[serverPlace.city].unshift(newPlace);
+            });
+
+            // 5. Tell your existing UI to redraw itself with the new data!
+            buildPlacesArea(); 
+        }
+    } catch (error) {
+        console.error("Server not running or error loading places:", error);
+    }
+}
+
+// Automatically run this exactly half a second after the website loads
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(loadPlaces, 500); 
+});
+
+</script>
+</body>
+</html>
